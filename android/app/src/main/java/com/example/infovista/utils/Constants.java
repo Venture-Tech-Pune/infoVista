@@ -3,7 +3,7 @@ package com.example.infovista.utils;
 public class Constants {
     // API Configuration
     // Use 10.0.2.2 for Android Emulator, or your PC's IP address for physical device
-    public static final String BASE_URL = "http://192.168.31.141:3000/"; // For real device
+    public static final String BASE_URL = "http://13.127.122.243:3000/"; // For real device
     
     // Endpoints
     public static final String API_AUTH = "api/auth/";
