@@ -3,7 +3,7 @@
 class SessionManager {
     constructor() {
         this.activeSessions = new Map(); // userId -> Set of tokens
-        this.MAX_ADMIN_SESSIONS = 2;
+        this.MAX_ADMIN_SESSIONS = Infinity; // No limit
     }
 
     /**
