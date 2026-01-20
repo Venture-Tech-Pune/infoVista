@@ -302,7 +302,7 @@ class DisplayManager:
             weather_y = self.height // 2 + 100
             
             # Temperature
-            temp = weather_data.get('temp', 'N/A')
+            temp = weather_data.get('temperature', 'N/A')
             temp_text = f"{temp}°C"
             temp_surface = pygame.font.SysFont('Arial', 72, bold=True).render(temp_text, True, (255, 200, 100))
             temp_rect = temp_surface.get_rect(center=(self.width // 2, weather_y))
