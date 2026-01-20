@@ -35,7 +35,7 @@ public class NoticeDetailsActivity extends AppCompatActivity {
 
     private TextView tvTitle, tvDescription, tvPriority, tvCategory, tvDate, tvCreator, tvDuration;
     private ImageView ivMedia;
-    private MaterialButton btnEdit, btnDelete;
+    private MaterialButton btnEdit, btnDelete, btnUpload;
     
     private Notice notice;
     private SharedPrefManager prefManager;
@@ -69,6 +69,7 @@ public class NoticeDetailsActivity extends AppCompatActivity {
         ivMedia = findViewById(R.id.ivMedia);
         btnEdit = findViewById(R.id.btnEdit);
         btnDelete = findViewById(R.id.btnDelete);
+        btnUpload = findViewById(R.id.btnUpload);
 
         // Get notice from intent
         String noticeJson = getIntent().getStringExtra("NOTICE_JSON");
@@ -94,6 +95,7 @@ public class NoticeDetailsActivity extends AppCompatActivity {
         // Button listeners
         btnEdit.setOnClickListener(v -> editNotice());
         btnDelete.setOnClickListener(v -> confirmDelete());
+        btnUpload.setOnClickListener(v -> confirmPublish());
     }
 
     private void displayNotice() {
@@ -152,6 +154,14 @@ public class NoticeDetailsActivity extends AppCompatActivity {
         } else {
             ivMedia.setVisibility(View.GONE);
         }
+
+        // Check if notice is a draft (not active) and show Upload button
+        String role = prefManager.getUserRole();
+        if ((role.equals(Constants.ROLE_ADMIN) || role.equals(Constants.ROLE_MANAGER)) && !notice.isActive()) {
+            btnUpload.setVisibility(View.VISIBLE);
+        } else {
+            btnUpload.setVisibility(View.GONE);
+        }
     }
 
     private static final int REQUEST_EDIT_NOTICE = 101;
@@ -174,6 +184,52 @@ public class NoticeDetailsActivity extends AppCompatActivity {
         }
     }
     
+    private void confirmPublish() {
+        new AlertDialog.Builder(this)
+                .setTitle("Upload Notice")
+                .setMessage("Are you sure you want to upload this notice to the board? It will become visible to all users.")
+                .setPositiveButton("Upload", (dialog, which) -> publishNotice())
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void publishNotice() {
+        // Update notice to set isActive = true
+        try {
+            okhttp3.RequestBody titlePart = okhttp3.RequestBody.create(okhttp3.MediaType.parse("text/plain"), notice.getTitle());
+            okhttp3.RequestBody descriptionPart = okhttp3.RequestBody.create(okhttp3.MediaType.parse("text/plain"), notice.getDescription());
+            okhttp3.RequestBody priorityPart = okhttp3.RequestBody.create(okhttp3.MediaType.parse("text/plain"), notice.getPriority());
+            okhttp3.RequestBody categoryPart = okhttp3.RequestBody.create(okhttp3.MediaType.parse("text/plain"), notice.getCategory());
+            okhttp3.RequestBody durationPart = okhttp3.RequestBody.create(okhttp3.MediaType.parse("text/plain"), String.valueOf(notice.getDisplayDuration()));
+            okhttp3.RequestBody isActivePart = okhttp3.RequestBody.create(okhttp3.MediaType.parse("text/plain"), "true");
+
+            Call<ApiResponse<Notice>> call = ApiClient.getApiService().updateNotice(
+                    authToken, notice.getId(), titlePart, descriptionPart, priorityPart, categoryPart, durationPart, isActivePart, null
+            );
+
+            call.enqueue(new Callback<ApiResponse<Notice>>() {
+                @Override
+                public void onResponse(Call<ApiResponse<Notice>> call, Response<ApiResponse<Notice>> response) {
+                    if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                        notice = response.body().getData();
+                        Toast.makeText(NoticeDetailsActivity.this, "Notice uploaded to board successfully!", Toast.LENGTH_LONG).show();
+                        btnUpload.setVisibility(View.GONE);
+                        setResult(RESULT_OK);
+                    } else {
+                        Toast.makeText(NoticeDetailsActivity.this, "Failed to upload notice", Toast.LENGTH_SHORT).show();
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<ApiResponse<Notice>> call, Throwable t) {
+                    Toast.makeText(NoticeDetailsActivity.this, "Network error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                }
+            });
+        } catch (Exception e) {
+            Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+
     private void fetchNoticeDetails() {
         Call<ApiResponse<Notice>> call = ApiClient.getApiService().getNotice(authToken, notice.getId());
         call.enqueue(new Callback<ApiResponse<Notice>>() {

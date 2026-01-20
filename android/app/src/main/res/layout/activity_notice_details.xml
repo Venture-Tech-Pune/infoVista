@@ -130,6 +130,17 @@
                 android:gravity="end">
 
                 <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnUpload"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Upload to Board"
+                    android:layout_marginEnd="8dp"
+                    android:visibility="gone"
+                    app:backgroundTint="@color/accent"
+                    android:textColor="@color/white" />
+
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnEdit"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"

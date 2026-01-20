@@ -13,6 +13,7 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -46,6 +47,11 @@ public class CreateNoticeActivity extends AppCompatActivity {
     private ImageView ivPreview;
     private ProgressBar progressBar;
 
+    // Preview views
+    private TextView previewTitle, previewDescription, previewCategory, previewDuration;
+    private ImageView previewImage;
+    private View previewPriorityBar;
+
     private Uri selectedImageUri;
     private String authToken;
     private boolean isEditMode = false;
@@ -75,6 +81,14 @@ public class CreateNoticeActivity extends AppCompatActivity {
         ivPreview = findViewById(R.id.ivPreview);
         progressBar = findViewById(R.id.progressBar);
 
+        // Initialize preview views
+        previewTitle = findViewById(R.id.previewTitle);
+        previewDescription = findViewById(R.id.previewDescription);
+        previewCategory = findViewById(R.id.previewCategory);
+        previewDuration = findViewById(R.id.previewDuration);
+        previewImage = findViewById(R.id.previewImage);
+        previewPriorityBar = findViewById(R.id.previewPriorityBar);
+
         // Setup spinners
         setupSpinners();
 
@@ -86,9 +100,115 @@ public class CreateNoticeActivity extends AppCompatActivity {
             setupEditMode();
         }
 
+        // Setup real-time preview listeners
+        setupPreviewListeners();
+
         // Click listeners
         btnSelectImage.setOnClickListener(v -> selectImage());
         btnSubmit.setOnClickListener(v -> submitNotice());
+    }
+
+    private void setupPreviewListeners() {
+        // Title change listener
+        etTitle.addTextChangedListener(new android.text.TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                updatePreview();
+            }
+
+            @Override
+            public void afterTextChanged(android.text.Editable s) {}
+        });
+
+        // Description change listener
+        etDescription.addTextChangedListener(new android.text.TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                updatePreview();
+            }
+
+            @Override
+            public void afterTextChanged(android.text.Editable s) {}
+        });
+
+        // Duration change listener
+        etDuration.addTextChangedListener(new android.text.TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                updatePreview();
+            }
+
+            @Override
+            public void afterTextChanged(android.text.Editable s) {}
+        });
+
+        // Spinner listeners
+        spinnerPriority.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(android.widget.AdapterView<?> parent, View view, int position, long id) {
+                updatePreview();
+            }
+
+            @Override
+            public void onNothingSelected(android.widget.AdapterView<?> parent) {}
+        });
+
+        spinnerCategory.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(android.widget.AdapterView<?> parent, View view, int position, long id) {
+                updatePreview();
+            }
+
+            @Override
+            public void onNothingSelected(android.widget.AdapterView<?> parent) {}
+        });
+    }
+
+    private void updatePreview() {
+        // Update title
+        String title = etTitle.getText().toString().trim();
+        previewTitle.setText(title.isEmpty() ? "Notice Title" : title);
+
+        // Update description
+        String description = etDescription.getText().toString().trim();
+        previewDescription.setText(description.isEmpty() ? "Notice description..." : description);
+
+        // Update category
+        String category = spinnerCategory.getSelectedItem().toString();
+        previewCategory.setText("• " + category.toUpperCase());
+
+        // Update duration
+        String durationStr = etDuration.getText().toString().trim();
+        String duration = durationStr.isEmpty() ? "10" : durationStr;
+        previewDuration.setText(duration + "s");
+
+        // Update priority bar color
+        String priority = spinnerPriority.getSelectedItem().toString().toLowerCase();
+        int priorityColor;
+        switch (priority) {
+            case "urgent":
+                priorityColor = getResources().getColor(R.color.priority_urgent);
+                break;
+            case "high":
+                priorityColor = getResources().getColor(R.color.priority_high);
+                break;
+            case "medium":
+                priorityColor = getResources().getColor(R.color.priority_medium);
+                break;
+            default:
+                priorityColor = getResources().getColor(R.color.priority_low);
+        }
+        previewPriorityBar.setBackgroundColor(priorityColor);
+        previewCategory.setTextColor(priorityColor);
     }
 
     private void setupSpinners() {
@@ -186,6 +306,10 @@ public class CreateNoticeActivity extends AppCompatActivity {
             selectedImageUri = data.getData();
             ivPreview.setVisibility(View.VISIBLE);
             ivPreview.setImageURI(selectedImageUri);
+
+            // Update preview image
+            previewImage.setVisibility(View.VISIBLE);
+            previewImage.setImageURI(selectedImageUri);
         }
     }
 
@@ -235,6 +359,7 @@ public class CreateNoticeActivity extends AppCompatActivity {
         RequestBody priorityPart = RequestBody.create(MediaType.parse("text/plain"), priority);
         RequestBody categoryPart = RequestBody.create(MediaType.parse("text/plain"), category);
         RequestBody durationPart = RequestBody.create(MediaType.parse("text/plain"), String.valueOf(duration));
+        RequestBody isActivePart = RequestBody.create(MediaType.parse("text/plain"), isEditMode ? "true" : "false");
 
         MultipartBody.Part mediaPart = null;
         if (selectedImageUri != null) {
@@ -259,11 +384,11 @@ public class CreateNoticeActivity extends AppCompatActivity {
         Call<ApiResponse<Notice>> call;
         if (isEditMode) {
             call = ApiClient.getApiService().updateNotice(
-                    authToken, noticeToEdit.getId(), titlePart, descriptionPart, priorityPart, categoryPart, durationPart, mediaPart
+                    authToken, noticeToEdit.getId(), titlePart, descriptionPart, priorityPart, categoryPart, durationPart, isActivePart, mediaPart
             );
         } else {
             call = ApiClient.getApiService().createNotice(
-                    authToken, titlePart, descriptionPart, priorityPart, categoryPart, durationPart, mediaPart
+                    authToken, titlePart, descriptionPart, priorityPart, categoryPart, durationPart, isActivePart, mediaPart
             );
         }
 
@@ -276,8 +401,17 @@ public class CreateNoticeActivity extends AppCompatActivity {
                     ApiResponse<Notice> apiResponse = response.body();
 
                     if (apiResponse.isSuccess()) {
-                        String msg = isEditMode ? "Notice updated successfully!" : "Notice created successfully!";
+                        Notice createdNotice = apiResponse.getData();
+                        String msg = isEditMode ? "Notice updated successfully!" : "Draft saved successfully!";
                         Toast.makeText(CreateNoticeActivity.this, msg, Toast.LENGTH_SHORT).show();
+                        
+                        if (!isEditMode) {
+                            // Navigate to NoticeDetailsActivity for upload
+                            Intent intent = new Intent(CreateNoticeActivity.this, NoticeDetailsActivity.class);
+                            intent.putExtra("NOTICE_JSON", new com.google.gson.Gson().toJson(createdNotice));
+                            startActivity(intent);
+                        }
+                        
                         setResult(RESULT_OK); // Signal success
                         finish(); // Go back
                     } else {

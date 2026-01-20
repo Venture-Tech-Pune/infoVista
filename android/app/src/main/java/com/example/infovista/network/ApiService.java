@@ -73,6 +73,7 @@ public interface ApiService {
             @Part("priority") RequestBody priority,
             @Part("category") RequestBody category,
             @Part("displayDuration") RequestBody displayDuration,
+            @Part("isActive") RequestBody isActive,
             @Part MultipartBody.Part media
     );
     
@@ -86,6 +87,7 @@ public interface ApiService {
             @Part("priority") RequestBody priority,
             @Part("category") RequestBody category,
             @Part("displayDuration") RequestBody displayDuration,
+            @Part("isActive") RequestBody isActive,
             @Part MultipartBody.Part media
     );
     

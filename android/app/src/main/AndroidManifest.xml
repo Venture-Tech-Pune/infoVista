@@ -55,6 +55,12 @@
             android:exported="false"
             android:parentActivityName=".activities.DashboardActivity" />
 
+        <!-- Notice Board Preview Activity -->
+        <activity
+            android:name=".activities.NoticeBoardPreviewActivity"
+            android:exported="false"
+            android:parentActivityName=".activities.DashboardActivity" />
+
         <!-- Firebase Messaging Service -->
         <service
             android:name=".services.MyFirebaseMessagingService"

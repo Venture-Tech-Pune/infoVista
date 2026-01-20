@@ -89,6 +89,11 @@ public class DashboardActivity extends AppCompatActivity {
             }
         });
 
+        // Board Preview card click listener
+        findViewById(R.id.cardBoardPreview).setOnClickListener(v -> {
+            startActivity(new Intent(DashboardActivity.this, NoticeBoardPreviewActivity.class));
+        });
+
         // Swipe to refresh
         swipeRefresh.setOnRefreshListener(() -> loadNotices());
 
