@@ -41,11 +41,13 @@ import retrofit2.Response;
 
 public class CreateNoticeActivity extends AppCompatActivity {
 
-    private EditText etTitle, etDescription, etDuration;
+    private EditText etTitle, etDescription, etDuration, etScheduledAt, etExpiresAt;
     private Spinner spinnerPriority, spinnerCategory;
     private Button btnSelectImage, btnSubmit;
     private ImageView ivPreview;
     private ProgressBar progressBar;
+
+    private Long scheduledAtTimestamp, expiresAtTimestamp;
 
     // Preview views
     private TextView previewTitle, previewDescription, previewCategory, previewDuration;
@@ -74,12 +76,18 @@ public class CreateNoticeActivity extends AppCompatActivity {
         etTitle = findViewById(R.id.etTitle);
         etDescription = findViewById(R.id.etDescription);
         etDuration = findViewById(R.id.etDuration);
+        etScheduledAt = findViewById(R.id.etScheduledAt);
+        etExpiresAt = findViewById(R.id.etExpiresAt);
         spinnerPriority = findViewById(R.id.spinnerPriority);
         spinnerCategory = findViewById(R.id.spinnerCategory);
         btnSelectImage = findViewById(R.id.btnSelectImage);
         btnSubmit = findViewById(R.id.btnSubmit);
         ivPreview = findViewById(R.id.ivPreview);
         progressBar = findViewById(R.id.progressBar);
+
+        // Setup date/time pickers
+        etScheduledAt.setOnClickListener(v -> showDateTimePicker(true));
+        etExpiresAt.setOnClickListener(v -> showDateTimePicker(false));
 
         // Initialize preview views
         previewTitle = findViewById(R.id.previewTitle);
@@ -241,6 +249,15 @@ public class CreateNoticeActivity extends AppCompatActivity {
             setSpinnerValue(spinnerPriority, noticeToEdit.getPriority());
             setSpinnerValue(spinnerCategory, noticeToEdit.getCategory());
 
+            // Set schedule/expiry if available
+            if (noticeToEdit.getScheduledAt() != null) {
+                etScheduledAt.setText(formatDisplayDate(noticeToEdit.getScheduledAt()));
+                // ISO string to timestamp if possible (omitted for brevity, will set on picker)
+            }
+            if (noticeToEdit.getExpiresAt() != null) {
+                etExpiresAt.setText(formatDisplayDate(noticeToEdit.getExpiresAt()));
+            }
+
             // Load existing image if available
             if (noticeToEdit.getMediaUrl() != null && !noticeToEdit.getMediaUrl().isEmpty() 
                     && "image".equals(noticeToEdit.getMediaType())) {
@@ -326,6 +343,63 @@ public class CreateNoticeActivity extends AppCompatActivity {
         }
     }
 
+    private void showDateTimePicker(boolean isSchedule) {
+        java.util.Calendar calendar = java.util.Calendar.getInstance();
+        new android.app.DatePickerDialog(this, (view, year, month, dayOfMonth) -> {
+            calendar.set(java.util.Calendar.YEAR, year);
+            calendar.set(java.util.Calendar.MONTH, month);
+            calendar.set(java.util.Calendar.DAY_OF_MONTH, dayOfMonth);
+
+            new android.app.TimePickerDialog(this, (timeView, hourOfDay, minute) -> {
+                calendar.set(java.util.Calendar.HOUR_OF_DAY, hourOfDay);
+                calendar.set(java.util.Calendar.MINUTE, minute);
+                calendar.set(java.util.Calendar.SECOND, 0);
+
+                long timestamp = calendar.getTimeInMillis();
+                long now = System.currentTimeMillis();
+
+                if (isSchedule) {
+                    if (timestamp < now - 60000) { // Allow 1 minute grace
+                        Toast.makeText(this, "Schedule time cannot be in the past", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    scheduledAtTimestamp = timestamp;
+                    etScheduledAt.setText(android.text.format.DateFormat.format("yyyy-MM-dd HH:mm", calendar).toString());
+                } else {
+                    if (timestamp < now) {
+                        Toast.makeText(this, "Expiry time cannot be in the past", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    if (scheduledAtTimestamp != null && timestamp <= scheduledAtTimestamp) {
+                        Toast.makeText(this, "Expiry time must be after schedule time", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    expiresAtTimestamp = timestamp;
+                    etExpiresAt.setText(android.text.format.DateFormat.format("yyyy-MM-dd HH:mm", calendar).toString());
+                }
+            }, calendar.get(java.util.Calendar.HOUR_OF_DAY), calendar.get(java.util.Calendar.MINUTE), true).show();
+        }, calendar.get(java.util.Calendar.YEAR), calendar.get(java.util.Calendar.MONTH), calendar.get(java.util.Calendar.DAY_OF_MONTH)).show();
+    }
+
+    private String formatDisplayDate(String isoString) {
+        try {
+            java.text.SimpleDateFormat isoFormat = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", java.util.Locale.US);
+            isoFormat.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
+            java.util.Date date = isoFormat.parse(isoString);
+            java.text.SimpleDateFormat displayFormat = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.getDefault());
+            return displayFormat.format(date);
+        } catch (Exception e) {
+            return isoString;
+        }
+    }
+
+    private String toIsoString(Long timestamp) {
+        if (timestamp == null) return null;
+        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", java.util.Locale.US);
+        sdf.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
+        return sdf.format(new java.util.Date(timestamp));
+    }
+
     private void submitNotice() {
         String title = etTitle.getText().toString().trim();
         String description = etDescription.getText().toString().trim();
@@ -359,7 +433,13 @@ public class CreateNoticeActivity extends AppCompatActivity {
         RequestBody priorityPart = RequestBody.create(MediaType.parse("text/plain"), priority);
         RequestBody categoryPart = RequestBody.create(MediaType.parse("text/plain"), category);
         RequestBody durationPart = RequestBody.create(MediaType.parse("text/plain"), String.valueOf(duration));
-        RequestBody isActivePart = RequestBody.create(MediaType.parse("text/plain"), isEditMode ? "true" : "false");
+        RequestBody isActivePart = RequestBody.create(MediaType.parse("text/plain"), "true");
+
+        String scheduledAtIso = toIsoString(scheduledAtTimestamp);
+        String expiresAtIso = toIsoString(expiresAtTimestamp);
+
+        RequestBody scheduledAtPart = scheduledAtIso != null ? RequestBody.create(MediaType.parse("text/plain"), scheduledAtIso) : null;
+        RequestBody expiresAtPart = expiresAtIso != null ? RequestBody.create(MediaType.parse("text/plain"), expiresAtIso) : null;
 
         MultipartBody.Part mediaPart = null;
         if (selectedImageUri != null) {
@@ -384,11 +464,11 @@ public class CreateNoticeActivity extends AppCompatActivity {
         Call<ApiResponse<Notice>> call;
         if (isEditMode) {
             call = ApiClient.getApiService().updateNotice(
-                    authToken, noticeToEdit.getId(), titlePart, descriptionPart, priorityPart, categoryPart, durationPart, isActivePart, mediaPart
+                    authToken, noticeToEdit.getId(), titlePart, descriptionPart, priorityPart, categoryPart, durationPart, isActivePart, scheduledAtPart, expiresAtPart, mediaPart
             );
         } else {
             call = ApiClient.getApiService().createNotice(
-                    authToken, titlePart, descriptionPart, priorityPart, categoryPart, durationPart, isActivePart, mediaPart
+                    authToken, titlePart, descriptionPart, priorityPart, categoryPart, durationPart, isActivePart, scheduledAtPart, expiresAtPart, mediaPart
             );
         }
 

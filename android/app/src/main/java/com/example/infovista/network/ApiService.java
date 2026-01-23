@@ -74,6 +74,8 @@ public interface ApiService {
             @Part("category") RequestBody category,
             @Part("displayDuration") RequestBody displayDuration,
             @Part("isActive") RequestBody isActive,
+            @Part("scheduledAt") RequestBody scheduledAt,
+            @Part("expiresAt") RequestBody expiresAt,
             @Part MultipartBody.Part media
     );
     
@@ -88,6 +90,8 @@ public interface ApiService {
             @Part("category") RequestBody category,
             @Part("displayDuration") RequestBody displayDuration,
             @Part("isActive") RequestBody isActive,
+            @Part("scheduledAt") RequestBody scheduledAt,
+            @Part("expiresAt") RequestBody expiresAt,
             @Part MultipartBody.Part media
     );
     

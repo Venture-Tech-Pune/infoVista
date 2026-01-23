@@ -202,9 +202,11 @@ public class NoticeDetailsActivity extends AppCompatActivity {
             okhttp3.RequestBody categoryPart = okhttp3.RequestBody.create(okhttp3.MediaType.parse("text/plain"), notice.getCategory());
             okhttp3.RequestBody durationPart = okhttp3.RequestBody.create(okhttp3.MediaType.parse("text/plain"), String.valueOf(notice.getDisplayDuration()));
             okhttp3.RequestBody isActivePart = okhttp3.RequestBody.create(okhttp3.MediaType.parse("text/plain"), "true");
+            okhttp3.RequestBody scheduledAtPart = notice.getScheduledAt() != null ? okhttp3.RequestBody.create(okhttp3.MediaType.parse("text/plain"), notice.getScheduledAt()) : null;
+            okhttp3.RequestBody expiresAtPart = notice.getExpiresAt() != null ? okhttp3.RequestBody.create(okhttp3.MediaType.parse("text/plain"), notice.getExpiresAt()) : null;
 
             Call<ApiResponse<Notice>> call = ApiClient.getApiService().updateNotice(
-                    authToken, notice.getId(), titlePart, descriptionPart, priorityPart, categoryPart, durationPart, isActivePart, null
+                    authToken, notice.getId(), titlePart, descriptionPart, priorityPart, categoryPart, durationPart, isActivePart, scheduledAtPart, expiresAtPart, null
             );
 
             call.enqueue(new Callback<ApiResponse<Notice>>() {

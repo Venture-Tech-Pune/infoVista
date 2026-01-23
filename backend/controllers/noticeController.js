@@ -51,28 +51,44 @@ exports.getActiveNotices = async (req, res) => {
 
         const filter = {
             isActive: true,
-            scheduledAt: { $lte: now },
-            $or: [
-                { expiresAt: null },
-                { expiresAt: { $gt: now } }
-            ]
+            scheduledAt: { $lte: new Date(now.getTime() + 60000) } // 1 minute grace for clock skew
         };
+
+        // Combine expiry and device filters using $and to avoid overwriting $or
+        filter.$and = [
+            {
+                $or: [
+                    { expiresAt: null },
+                    { expiresAt: { $gt: now } }
+                ]
+            }
+        ];
 
         // If deviceId is provided, filter by target devices
         if (deviceId) {
             const Device = require('../models/Device');
             const device = await Device.findOne({ deviceId });
             if (device) {
-                filter.$or = [
-                    { targetDevices: { $size: 0 } },
-                    { targetDevices: device._id }
-                ];
+                filter.$and.push({
+                    $or: [
+                        { targetDevices: { $size: 0 } },
+                        { targetDevices: device._id }
+                    ]
+                });
+                console.log(`Filtering for device: ${deviceId} (${device._id})`);
+            } else {
+                console.log(`Device ID ${deviceId} not found in database. Showing all public notices.`);
             }
         }
+
+        console.log('Active Notice Filter:', JSON.stringify(filter, null, 2));
+        console.log('Current Time (Server):', now.toISOString());
 
         const notices = await Notice.find(filter)
             .populate('createdBy', 'name')
             .sort({ priority: -1, scheduledAt: -1 });
+
+        console.log(`Found ${notices.length} matching notices.`);
 
         res.status(200).json({
             success: true,

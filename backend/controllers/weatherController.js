@@ -6,7 +6,6 @@ let weatherCache = {
     timestamp: null,
     ttl: 10 * 60 * 1000 // 10 minutes cache
 };
-
 // Pune coordinates (hardcoded)
 const PUNE_LATITUDE = 18.5204;
 const PUNE_LONGITUDE = 73.8567;
@@ -129,7 +128,6 @@ exports.getWeatherForecast = async (req, res) => {
             description: getWeatherDescription(daily.weather_code[index]),
             icon: daily.weather_code[index] < 3 ? '01d' : '10d'
         }));
-
         res.status(200).json({
             success: true,
             data: {
