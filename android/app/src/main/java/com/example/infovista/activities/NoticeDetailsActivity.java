@@ -157,7 +157,7 @@ public class NoticeDetailsActivity extends AppCompatActivity {
 
         // Check if notice is a draft (not active) and show Upload button
         String role = prefManager.getUserRole();
-        if ((role.equals(Constants.ROLE_ADMIN) || role.equals(Constants.ROLE_MANAGER)) && !notice.isActive()) {
+        if (role.equals(Constants.ROLE_ADMIN) || role.equals(Constants.ROLE_MANAGER)) {
             btnUpload.setVisibility(View.VISIBLE);
         } else {
             btnUpload.setVisibility(View.GONE);
