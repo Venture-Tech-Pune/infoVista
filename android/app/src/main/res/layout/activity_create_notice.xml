@@ -114,13 +114,7 @@
                                 android:layout_height="0dp"
                                 android:layout_weight="1" />
 
-                            <TextView
-                                android:id="@+id/previewDuration"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="10s"
-                                android:textColor="@color/text_hint"
-                                android:textSize="12sp" />
+
 
                         </LinearLayout>
 
@@ -199,23 +193,7 @@
                 android:background="@color/surface"
                 android:padding="12dp" />
 
-            <com.google.android.material.textfield.TextInputLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
-                <EditText
-                    android:id="@+id/etDuration"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="Display Duration (seconds)"
-                    android:inputType="number"
-                    android:text="10"
-                    android:textColor="@color/text_primary"
-                    android:textColorHint="@color/text_hint" />
-
-            </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
@@ -282,16 +260,38 @@
                 android:visibility="gone"
                 android:indeterminateTint="@color/primary" />
 
-            <Button
-                android:id="@+id/btnSubmit"
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="56dp"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
                 android:layout_marginTop="24dp"
-                android:text="Save Draft"
-                android:textColor="@color/white"
-                android:backgroundTint="@color/accent"
-                android:textSize="16sp"
-                android:textStyle="bold" />
+                android:weightSum="2">
+
+                <Button
+                    android:id="@+id/btnSubmit"
+                    android:layout_width="0dp"
+                    android:layout_height="56dp"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="8dp"
+                    android:text="Save Draft"
+                    android:textColor="@color/white"
+                    android:backgroundTint="@color/text_secondary"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <Button
+                    android:id="@+id/btnUpload"
+                    android:layout_width="0dp"
+                    android:layout_height="56dp"
+                    android:layout_weight="1"
+                    android:layout_marginStart="8dp"
+                    android:text="Upload"
+                    android:textColor="@color/white"
+                    android:backgroundTint="@color/accent"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
 
         </LinearLayout>
 
