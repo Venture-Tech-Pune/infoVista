@@ -349,13 +349,23 @@ class DisplayManager:
         except Exception as e:
             logger.error(f"Error drawing branding: {e}")
 
+        # Welcome Text (Big, No Background)
+        welcome_size = int(64 * scale) # Bigger than title
+        welcome_font = pygame.font.SysFont('Arial', welcome_size, bold=True)
+        welcome_text = "Welcome To Computer Department"
+        welcome_surface = welcome_font.render(welcome_text, True, (255, 255, 255))
+        
+        # Position below header but above clock
+        # Adjust center_y lower to make room
+        center_y = int(self.height / 2 + 100 * scale_h) 
+        
+        welcome_rect = welcome_surface.get_rect(center=(self.width // 2, center_y - int(200 * scale_h)))
+        self.screen.blit(welcome_surface, welcome_rect)
+
         # Current time - Large digital clock
         now = datetime.now()
         time_str = now.strftime("%I:%M %p")
         date_str = now.strftime("%A, %B %d, %Y")
-        
-        # Adjust vertical spacing
-        center_y = int(self.height / 2 + 50 * scale_h)
         
         # Draw large clock
         clock_size = int(120 * scale)
@@ -365,9 +375,7 @@ class DisplayManager:
         self.screen.blit(time_surface, time_rect)
         
         # Draw date
-        date_size = int(32 * scale) # Rescaled from default title font size
-        date_surface = self.font_title.render(date_str, True, (180, 180, 180)) # Might need font resize too, but sticking to existing fonts for now or scaling them
-        # Let's just create a scaled font instance for date
+        date_size = int(32 * scale) 
         date_font = pygame.font.SysFont('Arial', date_size, bold=True)
         date_surface = date_font.render(date_str, True, (180, 180, 180))
         date_rect = date_surface.get_rect(center=(self.width // 2, center_y + int(20 * scale_h)))
@@ -402,23 +410,6 @@ class DisplayManager:
             info_surface = info_font.render(info_text, True, (150, 150, 150))
             info_rect = info_surface.get_rect(center=(self.width // 2, weather_y + int(120 * scale_h)))
             self.screen.blit(info_surface, info_rect)
-        
-        # Static Footer Text
-        ticker_bg_height = int(60 * scale_h)
-        ticker_y = self.height - ticker_bg_height
-        
-        # Draw background
-        pygame.draw.rect(self.screen, (200, 0, 0), (0, ticker_y, self.width, ticker_bg_height)) # Red background
-        
-        # Render static text
-        ticker_text = "Welcome To Computer Department"
-        ticker_size = int(32 * scale)
-        ticker_font = pygame.font.SysFont('Arial', ticker_size, bold=True)
-        text_surface = ticker_font.render(ticker_text, True, (255, 255, 255))
-        
-        # Center the text
-        text_rect = text_surface.get_rect(center=(self.width // 2, ticker_y + ticker_bg_height // 2))
-        self.screen.blit(text_surface, text_rect)
         
     def update(self):
         """Update the display"""
