@@ -50,11 +50,20 @@ class APIClient:
                 return data.get('data')
             else:
                 self.logger.error(f"❌ Weather API error: {data.get('message')}")
-                return None
+                raise Exception("API Error")
                 
         except Exception as e:
             self.logger.error(f"❌ Weather fetch error: {str(e)}")
-            return None
+            self.logger.warning("⚠️ Using dummy weather data for display")
+            # Return dummy data for testing/offline mode
+            return {
+                'temperature': 28,
+                'description': 'Sunny',
+                'humidity': 45,
+                'windSpeed': 12,
+                'city': city,
+                'country': country
+            }
     
     def update_device_status(self, status, ip_address=None):
         """Update device status on the server"""

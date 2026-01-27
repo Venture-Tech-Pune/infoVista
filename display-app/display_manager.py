@@ -282,24 +282,72 @@ class DisplayManager:
         # Full screen background
         self.screen.fill((20, 20, 30))  # Dark background for screensaver
         
+        # College Branding
+        try:
+            # Header background (optional, can keep dark or add a banner color)
+            # pygame.draw.rect(self.screen, (30, 30, 40), (0, 0, self.width, 150))
+            
+            # Load logos
+            logo_y = 30
+            logo_height = 120
+            
+            # Left Logo (SCOE)
+            try:
+                scoe_img = pygame.image.load("Logo/SCOE.png")
+                # Scale while maintaining aspect ratio
+                aspect = scoe_img.get_width() / scoe_img.get_height()
+                new_width = int(logo_height * aspect)
+                scoe_scaled = pygame.transform.smoothscale(scoe_img, (new_width, logo_height))
+                self.screen.blit(scoe_scaled, (50, logo_y))
+            except Exception as e:
+                logger.error(f"Failed to load SCOE logo: {e}")
+
+            # Right Logo (Swami)
+            try:
+                swami_img = pygame.image.load("Logo/swami.png")
+                # Scale while maintaining aspect ratio
+                aspect = swami_img.get_width() / swami_img.get_height()
+                new_width = int(logo_height * aspect)
+                swami_scaled = pygame.transform.smoothscale(swami_img, (new_width, logo_height))
+                self.screen.blit(swami_scaled, (self.width - new_width - 50, logo_y))
+            except Exception as e:
+                logger.error(f"Failed to load Swami logo: {e}")
+
+            # College Name
+            # Use a nice font for the college name
+            try:
+                college_font = pygame.font.SysFont('Arial', 56, bold=True)
+            except:
+                college_font = pygame.font.Font(None, 60)
+            
+            college_text = college_font.render("Samarth College of Engineering & Management", True, (255, 255, 255))
+            text_rect = college_text.get_rect(center=(self.width // 2, logo_y + logo_height // 2))
+            self.screen.blit(college_text, text_rect)
+            
+        except Exception as e:
+            logger.error(f"Error drawing branding: {e}")
+
         # Current time - Large digital clock
         now = datetime.now()
         time_str = now.strftime("%I:%M %p")
         date_str = now.strftime("%A, %B %d, %Y")
         
+        # Adjust clock position lower since we have header now
+        center_y = self.height // 2 + 50
+        
         # Draw large clock
         time_surface = pygame.font.SysFont('Arial', 120, bold=True).render(time_str, True, (255, 255, 255))
-        time_rect = time_surface.get_rect(center=(self.width // 2, self.height // 2 - 80))
+        time_rect = time_surface.get_rect(center=(self.width // 2, center_y - 80))
         self.screen.blit(time_surface, time_rect)
         
         # Draw date
         date_surface = self.font_title.render(date_str, True, (180, 180, 180))
-        date_rect = date_surface.get_rect(center=(self.width // 2, self.height // 2 + 20))
+        date_rect = date_surface.get_rect(center=(self.width // 2, center_y + 20))
         self.screen.blit(date_surface, date_rect)
         
         # Draw weather if available
         if weather_data:
-            weather_y = self.height // 2 + 100
+            weather_y = center_y + 100
             
             # Temperature
             temp = weather_data.get('temperature', 'N/A')
@@ -321,10 +369,10 @@ class DisplayManager:
             info_rect = info_surface.get_rect(center=(self.width // 2, weather_y + 120))
             self.screen.blit(info_surface, info_rect)
         
-        # App title at bottom
-        title_text = self.font_meta.render("📢 INFOVISTA - No Active Notices", True, (100, 100, 100))
-        title_rect = title_text.get_rect(center=(self.width // 2, self.height - 40))
-        self.screen.blit(title_text, title_rect)
+        # App title at bottom - Updated text or removed if redundant
+        # title_text = self.font_meta.render("📢 INFOVISTA - No Active Notices", True, (100, 100, 100))
+        # title_rect = title_text.get_rect(center=(self.width // 2, self.height - 40))
+        # self.screen.blit(title_text, title_rect)
     
     def update(self):
         """Update the display"""
