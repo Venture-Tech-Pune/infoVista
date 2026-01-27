@@ -403,26 +403,22 @@ class DisplayManager:
             info_rect = info_surface.get_rect(center=(self.width // 2, weather_y + int(120 * scale_h)))
             self.screen.blit(info_surface, info_rect)
         
-        # Scrolling Ticker
+        # Static Footer Text
         ticker_bg_height = int(60 * scale_h)
         ticker_y = self.height - ticker_bg_height
         
-        # Draw ticker background
-        # pygame.draw.rect(self.screen, (33, 150, 243), (0, ticker_y, self.width, ticker_bg_height)) # Blue background
-        pygame.draw.rect(self.screen, (200, 0, 0), (0, ticker_y, self.width, ticker_bg_height)) # Red background like news
+        # Draw background
+        pygame.draw.rect(self.screen, (200, 0, 0), (0, ticker_y, self.width, ticker_bg_height)) # Red background
         
-        # Render ticker text
-        ticker_text = "Welcome To Computer Department   ***   Welcome To Computer Department   ***   Welcome To Computer Department"
+        # Render static text
+        ticker_text = "Welcome To Computer Department"
         ticker_size = int(32 * scale)
         ticker_font = pygame.font.SysFont('Arial', ticker_size, bold=True)
         text_surface = ticker_font.render(ticker_text, True, (255, 255, 255))
         
-        # Update position
-        self.ticker_x -= 3  # Speed of scrolling
-        if self.ticker_x < -text_surface.get_width():
-            self.ticker_x = self.width
-            
-        self.screen.blit(text_surface, (self.ticker_x, ticker_y + (ticker_bg_height - text_surface.get_height()) // 2))
+        # Center the text
+        text_rect = text_surface.get_rect(center=(self.width // 2, ticker_y + ticker_bg_height // 2))
+        self.screen.blit(text_surface, text_rect)
         
     def update(self):
         """Update the display"""
