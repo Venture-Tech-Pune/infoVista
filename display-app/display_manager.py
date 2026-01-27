@@ -350,16 +350,16 @@ class DisplayManager:
             logger.error(f"Error drawing branding: {e}")
 
         # Welcome Text (Big, No Background)
-        welcome_size = int(64 * scale) # Bigger than title
+        welcome_size = int(80 * scale) # Increased font size
         welcome_font = pygame.font.SysFont('Arial', welcome_size, bold=True)
         welcome_text = "Welcome To Computer Department"
         welcome_surface = welcome_font.render(welcome_text, True, (255, 255, 255))
         
         # Position below header but above clock
-        # Adjust center_y lower to make room
-        center_y = int(self.height / 2 + 100 * scale_h) 
+        # Adjust center_y lower to make room (add margin)
+        center_y = int(self.height / 2 + 150 * scale_h) 
         
-        welcome_rect = welcome_surface.get_rect(center=(self.width // 2, center_y - int(200 * scale_h)))
+        welcome_rect = welcome_surface.get_rect(center=(self.width // 2, center_y - int(250 * scale_h)))
         self.screen.blit(welcome_surface, welcome_rect)
 
         # Current time - Large digital clock
