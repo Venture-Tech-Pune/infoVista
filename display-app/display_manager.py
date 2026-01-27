@@ -282,15 +282,18 @@ class DisplayManager:
         # Full screen background
         self.screen.fill((20, 20, 30))  # Dark background for screensaver
         
+        # Scale factors based on resolution (relative to 1920x1080)
+        scale_w = self.width / 1920
+        scale_h = self.height / 1080
+        scale = min(scale_w, scale_h)
+
+        # Calculates sizes dynamically
+        logo_height = int(120 * scale)
+        logo_y = int(30 * scale_h)
+        logo_margin = int(50 * scale_w)
+        
         # College Branding
         try:
-            # Header background (optional, can keep dark or add a banner color)
-            # pygame.draw.rect(self.screen, (30, 30, 40), (0, 0, self.width, 150))
-            
-            # Load logos
-            logo_y = 30
-            logo_height = 120
-            
             # Left Logo (SCOE)
             try:
                 scoe_img = pygame.image.load("Logo/SCOE.png")
@@ -298,7 +301,7 @@ class DisplayManager:
                 aspect = scoe_img.get_width() / scoe_img.get_height()
                 new_width = int(logo_height * aspect)
                 scoe_scaled = pygame.transform.smoothscale(scoe_img, (new_width, logo_height))
-                self.screen.blit(scoe_scaled, (50, logo_y))
+                self.screen.blit(scoe_scaled, (logo_margin, logo_y))
             except Exception as e:
                 logger.error(f"Failed to load SCOE logo: {e}")
 
@@ -309,20 +312,35 @@ class DisplayManager:
                 aspect = swami_img.get_width() / swami_img.get_height()
                 new_width = int(logo_height * aspect)
                 swami_scaled = pygame.transform.smoothscale(swami_img, (new_width, logo_height))
-                self.screen.blit(swami_scaled, (self.width - new_width - 50, logo_y))
+                self.screen.blit(swami_scaled, (self.width - new_width - logo_margin, logo_y))
             except Exception as e:
                 logger.error(f"Failed to load Swami logo: {e}")
 
             # College Name
-            # Use a nice font for the college name
+            font_size = int(56 * scale)
             try:
-                college_font = pygame.font.SysFont('Arial', 56, bold=True)
+                college_font = pygame.font.SysFont('Arial', font_size, bold=True)
             except:
-                college_font = pygame.font.Font(None, 60)
+                college_font = pygame.font.Font(None, font_size)
             
-            college_text = college_font.render("Samarth College of Engineering & Management", True, (255, 255, 255))
-            text_rect = college_text.get_rect(center=(self.width // 2, logo_y + logo_height // 2))
-            self.screen.blit(college_text, text_rect)
+            # Allow text to wrap if screen is too small
+            college_text = "Samarth College of Engineering & Management"
+            text_surface = college_font.render(college_text, True, (255, 255, 255))
+            
+            # Check if text fits inside logos
+            available_width = self.width - (2 * (logo_margin + new_width + 20))
+            if text_surface.get_width() > available_width:
+                 # Reduce font size until it fits
+                 while text_surface.get_width() > available_width and font_size > 10:
+                     font_size -= 2
+                     try:
+                        college_font = pygame.font.SysFont('Arial', font_size, bold=True)
+                     except:
+                        college_font = pygame.font.Font(None, font_size)
+                     text_surface = college_font.render(college_text, True, (255, 255, 255))
+
+            text_rect = text_surface.get_rect(center=(self.width // 2, logo_y + logo_height // 2))
+            self.screen.blit(text_surface, text_rect)
             
         except Exception as e:
             logger.error(f"Error drawing branding: {e}")
@@ -332,48 +350,55 @@ class DisplayManager:
         time_str = now.strftime("%I:%M %p")
         date_str = now.strftime("%A, %B %d, %Y")
         
-        # Adjust clock position lower since we have header now
-        center_y = self.height // 2 + 50
+        # Adjust vertical spacing
+        center_y = int(self.height / 2 + 50 * scale_h)
         
         # Draw large clock
-        time_surface = pygame.font.SysFont('Arial', 120, bold=True).render(time_str, True, (255, 255, 255))
-        time_rect = time_surface.get_rect(center=(self.width // 2, center_y - 80))
+        clock_size = int(120 * scale)
+        time_font = pygame.font.SysFont('Arial', clock_size, bold=True)
+        time_surface = time_font.render(time_str, True, (255, 255, 255))
+        time_rect = time_surface.get_rect(center=(self.width // 2, center_y - int(80 * scale_h)))
         self.screen.blit(time_surface, time_rect)
         
         # Draw date
-        date_surface = self.font_title.render(date_str, True, (180, 180, 180))
-        date_rect = date_surface.get_rect(center=(self.width // 2, center_y + 20))
+        date_size = int(32 * scale) # Rescaled from default title font size
+        date_surface = self.font_title.render(date_str, True, (180, 180, 180)) # Might need font resize too, but sticking to existing fonts for now or scaling them
+        # Let's just create a scaled font instance for date
+        date_font = pygame.font.SysFont('Arial', date_size, bold=True)
+        date_surface = date_font.render(date_str, True, (180, 180, 180))
+        date_rect = date_surface.get_rect(center=(self.width // 2, center_y + int(20 * scale_h)))
         self.screen.blit(date_surface, date_rect)
         
         # Draw weather if available
         if weather_data:
-            weather_y = center_y + 100
+            weather_y = center_y + int(100 * scale_h)
             
             # Temperature
             temp = weather_data.get('temperature', 'N/A')
             temp_text = f"{temp}°C"
-            temp_surface = pygame.font.SysFont('Arial', 72, bold=True).render(temp_text, True, (255, 200, 100))
+            temp_size = int(72 * scale)
+            temp_font = pygame.font.SysFont('Arial', temp_size, bold=True)
+            temp_surface = temp_font.render(temp_text, True, (255, 200, 100))
             temp_rect = temp_surface.get_rect(center=(self.width // 2, weather_y))
             self.screen.blit(temp_surface, temp_rect)
             
             # Weather description
+            desc_size = int(24 * scale)
+            desc_font = pygame.font.SysFont('Arial', desc_size)
             description = weather_data.get('description', 'Clear').title()
-            desc_surface = self.font_desc.render(description, True, (200, 200, 200))
-            desc_rect = desc_surface.get_rect(center=(self.width // 2, weather_y + 80))
+            desc_surface = desc_font.render(description, True, (200, 200, 200))
+            desc_rect = desc_surface.get_rect(center=(self.width // 2, weather_y + int(80 * scale_h)))
             self.screen.blit(desc_surface, desc_rect)
             
             # Additional weather info
+            info_size = int(18 * scale)
+            info_font = pygame.font.SysFont('Arial', info_size)
             humidity = weather_data.get('humidity', 'N/A')
             info_text = f"Humidity: {humidity}%"
-            info_surface = self.font_meta.render(info_text, True, (150, 150, 150))
-            info_rect = info_surface.get_rect(center=(self.width // 2, weather_y + 120))
+            info_surface = info_font.render(info_text, True, (150, 150, 150))
+            info_rect = info_surface.get_rect(center=(self.width // 2, weather_y + int(120 * scale_h)))
             self.screen.blit(info_surface, info_rect)
         
-        # App title at bottom - Updated text or removed if redundant
-        # title_text = self.font_meta.render("📢 INFOVISTA - No Active Notices", True, (100, 100, 100))
-        # title_rect = title_text.get_rect(center=(self.width // 2, self.height - 40))
-        # self.screen.blit(title_text, title_rect)
-    
     def update(self):
         """Update the display"""
         pygame.display.flip()
