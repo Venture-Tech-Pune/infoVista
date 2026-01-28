@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#F8F9FA">
+    android:background="@color/background">
 
     <!-- Display Board Header (matching display-app) -->
     <LinearLayout
@@ -18,7 +18,7 @@
         <ImageView
             android:layout_width="56dp"
             android:layout_height="76dp"
-            android:src="@drawable/img"
+            android:src="@drawable/logo"
             android:layout_marginRight="12dp"/>
         <TextView
             android:layout_width="0dp"

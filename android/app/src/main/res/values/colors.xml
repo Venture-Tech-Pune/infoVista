@@ -1,46 +1,45 @@
-<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Primary Colors - Modern Blue -->
-    <color name="primary">#2196F3</color>
-    <color name="primary_dark">#1976D2</color>
-    <color name="primary_light">#BBDEFB</color>
-    <color name="accent">#00BCD4</color>
+    <!-- Primary Colors - Starry Night Theme -->
+    <color name="primary">#0F1C3F</color> <!-- Deep Midnight Blue -->
+    <color name="primary_dark">#081026</color> <!-- Darker Midnight -->
+    <color name="primary_light">#1E3A8A</color> <!-- Lighter nebulous blue -->
+    <color name="accent">#4FC3F7</color> <!-- Starlight Blue -->
 
-    <!-- Background & Surface - Light Theme -->
-    <color name="background">#F8F9FA</color>
-    <color name="surface">#FFFFFF</color>
-    <color name="card_background">#FFFFFF</color>
+    <!-- Background & Surface - Dark Theme -->
+    <color name="background">#0B1221</color> <!-- Very dark blue/black -->
+    <color name="surface">#162036</color> <!-- Slightly lighter panel color -->
+    <color name="card_background">#1C2A48</color>
 
-    <!-- Text Colors - High Contrast -->
-    <color name="text_primary">#1A1A1A</color>
-    <color name="text_secondary">#666666</color>
-    <color name="text_hint">#999999</color>
+    <!-- Text Colors -->
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#B0C4DE</color> <!-- Light Steel Blue -->
+    <color name="text_hint">#6CA6CD</color>
 
     <!-- Basic Colors -->
     <color name="white">#FFFFFF</color>
     <color name="black">#000000</color>
     
     <!-- Gradient Colors -->
-    <color name="gradient_start">#2196F3</color>
-    <color name="gradient_end">#00BCD4</color>
+    <color name="gradient_start">#0F1C3F</color>
+    <color name="gradient_end">#1E3A8A</color>
 
     <!-- Notice Priority Colors -->
-    <color name="priority_urgent">#F44336</color>
-    <color name="priority_high">#FF9800</color>
-    <color name="priority_medium">#2196F3</color>
-    <color name="priority_low">#4CAF50</color>
+    <color name="priority_urgent">#FF5252</color>
+    <color name="priority_high">#FFB74D</color>
+    <color name="priority_medium">#4FC3F7</color>
+    <color name="priority_low">#81C784</color>
 
     <!-- Status Colors -->
-    <color name="success">#4CAF50</color>
-    <color name="warning">#FF9800</color>
-    <color name="error">#F44336</color>
-    <color name="info">#2196F3</color>
+    <color name="success">#81C784</color>
+    <color name="warning">#FFB74D</color>
+    <color name="error">#E57373</color>
+    <color name="info">#64B5F6</color>
     
     <!-- Material Theme Colors (required) -->
-    <color name="purple_200">#BB86FC</color>
-    <color name="purple_500">#6200EE</color>
-    <color name="purple_700">#3700B3</color>
-    <color name="teal_200">#03DAC5</color>
-    <color name="teal_700">#018786</color>
-    <color name="black_overlay">#66000000</color>
+    <color name="purple_200">#90CAF9</color>
+    <color name="purple_500">#2196F3</color>
+    <color name="purple_700">#1976D2</color>
+    <color name="teal_200">#80DEEA</color>
+    <color name="teal_700">#00ACC1</color>
+    <color name="black_overlay">#99000000</color>
 </resources>
