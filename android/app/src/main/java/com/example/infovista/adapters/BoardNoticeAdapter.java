@@ -78,28 +78,40 @@ public class BoardNoticeAdapter extends RecyclerView.Adapter<BoardNoticeAdapter.
             priorityBar.setBackgroundColor(priorityColor);
             tvCategory.setTextColor(priorityColor);
 
-            // Image
+            // Media
             if (notice.getMediaUrl() != null && !notice.getMediaUrl().isEmpty()
-                    && "image".equals(notice.getMediaType())) {
+                    && notice.getMediaType() != null) {
                 ivMedia.setVisibility(View.VISIBLE);
 
-                // Construct image URL
+                // Construct media URL
                 String mediaUrl = notice.getMediaUrl().startsWith("/")
                         ? notice.getMediaUrl().substring(1)
                         : notice.getMediaUrl();
-                String imageUrl = Constants.BASE_URL + mediaUrl;
+                String fullMediaUrl = Constants.BASE_URL + mediaUrl;
 
-                Glide.with(itemView.getContext())
-                        .load(imageUrl)
-                        .placeholder(R.drawable.ic_image_placeholder)
-                        .error(R.drawable.ic_image_placeholder)
-                        .into(ivMedia);
+                if ("image".equals(notice.getMediaType())) {
+                    Glide.with(itemView.getContext())
+                            .load(fullMediaUrl)
+                            .placeholder(R.drawable.ic_image_placeholder)
+                            .error(R.drawable.ic_image_placeholder)
+                            .into(ivMedia);
+                } else if ("video".equals(notice.getMediaType())) {
+                    Glide.with(itemView.getContext())
+                            .asBitmap()
+                            .load(fullMediaUrl)
+                            .frame(1000000)
+                            .placeholder(R.drawable.ic_video_placeholder)
+                            .error(R.drawable.ic_video_placeholder)
+                            .into(ivMedia);
+                } else {
+                    ivMedia.setVisibility(View.GONE);
+                }
 
-                // Show only 1 line of description if image exists
+                // Show only 1 line of description if media exists
                 tvDescription.setMaxLines(1);
             } else {
                 ivMedia.setVisibility(View.GONE);
-                // Show 2 lines of description if no image
+                // Show 2 lines of description if no media
                 tvDescription.setMaxLines(2);
             }
         }

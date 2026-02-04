@@ -15,6 +15,7 @@ import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.VideoView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -43,18 +44,19 @@ public class CreateNoticeActivity extends AppCompatActivity {
 
     private EditText etTitle, etDescription, etScheduledAt, etExpiresAt;
     private Spinner spinnerPriority, spinnerCategory;
-    private Button btnSelectImage, btnSubmit, btnUpload;
+    private Button btnSelectImage, btnSelectVideo, btnSubmit, btnUpload;
     private ImageView ivPreview;
+    private VideoView vvPreview;
     private ProgressBar progressBar;
 
     private Long scheduledAtTimestamp, expiresAtTimestamp;
+    private Uri selectedImageUri, selectedVideoUri;
 
     // Preview views
     private TextView previewTitle, previewDescription, previewCategory;
     private ImageView previewImage;
     private View previewPriorityBar;
 
-    private Uri selectedImageUri;
     private String authToken;
     private boolean isEditMode = false;
     private Notice noticeToEdit;
@@ -80,9 +82,11 @@ public class CreateNoticeActivity extends AppCompatActivity {
         spinnerPriority = findViewById(R.id.spinnerPriority);
         spinnerCategory = findViewById(R.id.spinnerCategory);
         btnSelectImage = findViewById(R.id.btnSelectImage);
-        btnSubmit = findViewById(R.id.btnSubmit);
+        btnSelectVideo = findViewById(R.id.btnSelectVideo);
+//        btnSubmit = findViewById(R.id.btnSubmit);
         btnUpload = findViewById(R.id.btnUpload);
         ivPreview = findViewById(R.id.ivPreview);
+        vvPreview = findViewById(R.id.vvPreview);
         progressBar = findViewById(R.id.progressBar);
 
         // Setup date/time pickers
@@ -112,7 +116,8 @@ public class CreateNoticeActivity extends AppCompatActivity {
 
         // Click listeners
         btnSelectImage.setOnClickListener(v -> selectImage());
-        btnSubmit.setOnClickListener(v -> submitNotice(false)); // Save Draft (Inactive)
+        btnSelectVideo.setOnClickListener(v -> selectVideo());
+//        btnSubmit.setOnClickListener(v -> submitNotice(false)); // Save Draft (Inactive)
         btnUpload.setOnClickListener(v -> submitNotice(true));  // Upload (Active)
     }
 
@@ -219,7 +224,7 @@ public class CreateNoticeActivity extends AppCompatActivity {
 
     private void setupEditMode() {
         getSupportActionBar().setTitle("Edit Notice");
-        btnSubmit.setText("Update Draft");
+//        btnSubmit.setText("Update Draft");
         btnUpload.setText("Update & Publish");
 
         if (noticeToEdit != null) {
@@ -291,9 +296,33 @@ public class CreateNoticeActivity extends AppCompatActivity {
         }
     }
 
+    private void selectVideo() {
+        // Check permission based on Android version
+        String permission;
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            permission = Manifest.permission.READ_MEDIA_VIDEO;
+        } else {
+            permission = Manifest.permission.READ_EXTERNAL_STORAGE;
+        }
+
+        if (ContextCompat.checkSelfPermission(this, permission)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{permission},
+                    Constants.REQUEST_PERMISSION + 1); // Use different request code
+        } else {
+            openVideoPicker();
+        }
+    }
+
     private void openImagePicker() {
         Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
         startActivityForResult(intent, Constants.REQUEST_IMAGE_PICK);
+    }
+
+    private void openVideoPicker() {
+        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Video.Media.EXTERNAL_CONTENT_URI);
+        startActivityForResult(intent, Constants.REQUEST_VIDEO_PICK);
     }
 
     @Override
@@ -302,12 +331,27 @@ public class CreateNoticeActivity extends AppCompatActivity {
 
         if (requestCode == Constants.REQUEST_IMAGE_PICK && resultCode == RESULT_OK && data != null) {
             selectedImageUri = data.getData();
+            selectedVideoUri = null;
+            
             ivPreview.setVisibility(View.VISIBLE);
+            vvPreview.setVisibility(View.GONE);
             ivPreview.setImageURI(selectedImageUri);
 
             // Update preview image
             previewImage.setVisibility(View.VISIBLE);
             previewImage.setImageURI(selectedImageUri);
+        } else if (requestCode == Constants.REQUEST_VIDEO_PICK && resultCode == RESULT_OK && data != null) {
+            selectedVideoUri = data.getData();
+            selectedImageUri = null;
+
+            ivPreview.setVisibility(View.GONE);
+            vvPreview.setVisibility(View.VISIBLE);
+            vvPreview.setVideoURI(selectedVideoUri);
+            vvPreview.start();
+
+            // Preview image (thumbnail or placeholder for video)
+            previewImage.setVisibility(View.VISIBLE);
+            previewImage.setImageResource(R.drawable.ic_video_placeholder);
         }
     }
 
@@ -318,6 +362,12 @@ public class CreateNoticeActivity extends AppCompatActivity {
         if (requestCode == Constants.REQUEST_PERMISSION) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 openImagePicker();
+            } else {
+                Toast.makeText(this, "Permission denied", Toast.LENGTH_SHORT).show();
+            }
+        } else if (requestCode == Constants.REQUEST_PERMISSION + 1) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                openVideoPicker();
             } else {
                 Toast.makeText(this, "Permission denied", Toast.LENGTH_SHORT).show();
             }
@@ -420,19 +470,21 @@ public class CreateNoticeActivity extends AppCompatActivity {
         RequestBody expiresAtPart = expiresAtIso != null ? RequestBody.create(MediaType.parse("text/plain"), expiresAtIso) : null;
 
         MultipartBody.Part mediaPart = null;
-        if (selectedImageUri != null) {
+        Uri selectedUri = selectedImageUri != null ? selectedImageUri : selectedVideoUri;
+        
+        if (selectedUri != null) {
             // Use FileUtils to get actual file from content URI
-            File file = com.example.infovista.utils.FileUtils.getFileFromUri(this, selectedImageUri);
+            File file = com.example.infovista.utils.FileUtils.getFileFromUri(this, selectedUri);
             if (file != null && file.exists()) {
                 // Get actual MIME type from content resolver
-                String mimeType = getContentResolver().getType(selectedImageUri);
+                String mimeType = getContentResolver().getType(selectedUri);
                 if (mimeType == null) {
-                    mimeType = "image/jpeg"; // Default fallback
+                    mimeType = selectedImageUri != null ? "image/jpeg" : "video/mp4"; // Default fallback
                 }
                 RequestBody requestFile = RequestBody.create(MediaType.parse(mimeType), file);
                 mediaPart = MultipartBody.Part.createFormData("media", file.getName(), requestFile);
             } else {
-                Toast.makeText(this, "Failed to process image", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Failed to process media", Toast.LENGTH_SHORT).show();
                 setLoading(false);
                 return;
             }
@@ -497,7 +549,7 @@ public class CreateNoticeActivity extends AppCompatActivity {
 
     private void setLoading(boolean loading) {
         progressBar.setVisibility(loading ? View.VISIBLE : View.GONE);
-        btnSubmit.setEnabled(!loading);
+//        btnSubmit.setEnabled(!loading);
         btnUpload.setEnabled(!loading);
         btnSelectImage.setEnabled(!loading);
         etTitle.setEnabled(!loading);

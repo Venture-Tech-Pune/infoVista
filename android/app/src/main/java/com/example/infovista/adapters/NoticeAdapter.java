@@ -85,23 +85,34 @@ public class NoticeAdapter extends RecyclerView.Adapter<NoticeAdapter.ViewHolder
             holder.tvDate.setText(notice.getCreatedAt());
         }
 
-        // Load image if available
+        // Load media if available
         if (notice.getMediaUrl() != null && !notice.getMediaUrl().isEmpty() 
-                && notice.getMediaType() != null && notice.getMediaType().equals("image")) {
+                && notice.getMediaType() != null) {
             holder.ivMedia.setVisibility(View.VISIBLE);
             
-            // Construct proper image URL
-            // BASE_URL = "http://192.168.31.141:3000/"
-            // mediaUrl = "/uploads/media-xxx.jpg"
-            // Result should be: "http://192.168.31.141:3000/uploads/media-xxx.jpg"
-            String imageUrl = Constants.BASE_URL + notice.getMediaUrl().substring(1); // Remove leading slash
+            // Construct proper media URL
+            String mediaUrl = Constants.BASE_URL + notice.getMediaUrl().substring(1); // Remove leading slash
             
-            Glide.with(context)
-                    .load(imageUrl)
-                    .placeholder(R.drawable.ic_image_placeholder)
-                    .error(R.drawable.ic_image_placeholder)
-                    .centerCrop()
-                    .into(holder.ivMedia);
+            if (notice.getMediaType().equals("image")) {
+                Glide.with(context)
+                        .load(mediaUrl)
+                        .placeholder(R.drawable.ic_image_placeholder)
+                        .error(R.drawable.ic_image_placeholder)
+                        .centerCrop()
+                        .into(holder.ivMedia);
+            } else if (notice.getMediaType().equals("video")) {
+                // Glide can handle video URLs to pull a frame
+                Glide.with(context)
+                        .asBitmap()
+                        .load(mediaUrl)
+                        .frame(1000000) // Get frame at 1 second
+                        .placeholder(R.drawable.ic_video_placeholder)
+                        .error(R.drawable.ic_video_placeholder)
+                        .centerCrop()
+                        .into(holder.ivMedia);
+            } else {
+                holder.ivMedia.setVisibility(View.GONE);
+            }
         } else {
             holder.ivMedia.setVisibility(View.GONE);
         }

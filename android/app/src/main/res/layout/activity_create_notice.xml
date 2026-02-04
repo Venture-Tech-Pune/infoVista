@@ -233,14 +233,34 @@
 
             </com.google.android.material.textfield.TextInputLayout>
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnSelectImage"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:orientation="horizontal"
                 android:layout_marginTop="16dp"
-                android:text="Select Image"
-                android:textColor="@color/white"
-                style="@style/Widget.InfoVista.Button.Outlined" />
+                android:weightSum="2">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnSelectImage"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="8dp"
+                    android:text="Select Image"
+                    android:textColor="@color/white"
+                    style="@style/Widget.InfoVista.Button.Outlined" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnSelectVideo"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="8dp"
+                    android:text="Select Video"
+                    android:textColor="@color/white"
+                    style="@style/Widget.InfoVista.Button.Outlined" />
+
+            </LinearLayout>
 
             <ImageView
                 android:id="@+id/ivPreview"
@@ -250,6 +270,13 @@
                 android:scaleType="centerCrop"
                 android:visibility="gone"
                 android:contentDescription="Image Preview" />
+
+            <VideoView
+                android:id="@+id/vvPreview"
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:layout_marginTop="16dp"
+                android:visibility="gone" />
 
             <ProgressBar
                 android:id="@+id/progressBar"
@@ -267,21 +294,21 @@
                 android:layout_marginTop="24dp"
                 android:weightSum="2">
 
-                <Button
-                    android:id="@+id/btnSubmit"
-                    android:layout_width="0dp"
-                    android:layout_height="56dp"
-                    android:layout_weight="1"
-                    android:layout_marginEnd="8dp"
-                    android:text="Save Draft"
-                    android:textColor="@color/white"
-                    android:backgroundTint="@color/text_secondary"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
+<!--                <Button-->
+<!--                    android:id="@+id/btnSubmit"-->
+<!--                    android:layout_width="0dp"-->
+<!--                    android:layout_height="56dp"-->
+<!--                    android:layout_weight="1"-->
+<!--                    android:layout_marginEnd="8dp"-->
+<!--                    android:text="Save Draft"-->
+<!--                    android:textColor="@color/white"-->
+<!--                    android:backgroundTint="@color/text_secondary"-->
+<!--                    android:textSize="14sp"-->
+<!--                    android:textStyle="bold" />-->
 
                 <Button
                     android:id="@+id/btnUpload"
-                    android:layout_width="0dp"
+                    android:layout_width="match_parent"
                     android:layout_height="56dp"
                     android:layout_weight="1"
                     android:layout_marginStart="8dp"
