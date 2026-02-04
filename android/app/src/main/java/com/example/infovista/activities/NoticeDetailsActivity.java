@@ -36,7 +36,7 @@ import retrofit2.Response;
 
 public class NoticeDetailsActivity extends AppCompatActivity {
 
-    private TextView tvTitle, tvDescription, tvPriority, tvCategory, tvDate, tvCreator, tvDuration;
+    private TextView tvTitle, tvDescription, tvPriority, tvCategory, tvDate, tvCreator, tvDuration, tvAudioStatus;
     private ImageView ivMedia;
     private VideoView videoView;
     private ProgressBar pbVideoLoading;
@@ -71,6 +71,7 @@ public class NoticeDetailsActivity extends AppCompatActivity {
         tvDate = findViewById(R.id.tvDate);
         tvCreator = findViewById(R.id.tvCreator);
         tvDuration = findViewById(R.id.tvDuration);
+        tvAudioStatus = findViewById(R.id.tvAudioStatus);
         ivMedia = findViewById(R.id.ivMedia);
         videoView = findViewById(R.id.videoView);
         pbVideoLoading = findViewById(R.id.pbVideoLoading);
@@ -111,6 +112,18 @@ public class NoticeDetailsActivity extends AppCompatActivity {
         tvCategory.setText(notice.getCategory().toUpperCase());
         tvPriority.setText(notice.getPriority().toUpperCase());
         tvDuration.setText("Display Duration: " + notice.getDisplayDuration() + " seconds");
+
+        // Audio Status for Video
+        if ("video".equals(notice.getMediaType())) {
+            tvAudioStatus.setVisibility(View.VISIBLE);
+            if (notice.isMuted()) {
+                tvAudioStatus.setText("🔇 Muted on Board");
+            } else {
+                tvAudioStatus.setText("🔊 Audio Enabled");
+            }
+        } else {
+            tvAudioStatus.setVisibility(View.GONE);
+        }
 
         // Priority color
         int priorityColor;
