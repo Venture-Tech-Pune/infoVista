@@ -3,3 +3,5 @@ pygame>=2.6.0
 python-socketio[client]
 python-dotenv
 Pillow
+opencv-python
+numpy

@@ -3,6 +3,8 @@ import logging
 import textwrap
 import requests
 import io
+import os
+import cv2
 from datetime import datetime
 from PIL import Image
 
@@ -50,9 +52,13 @@ class DisplayManager:
             self.font_meta = pygame.font.Font(None, 18)
             self.font_header = pygame.font.Font(None, 48)
         
-        # Image cache
+        # Cache
         self.image_cache = {}
+        self.video_caps = {}
         self.base_url = "http://localhost:3000"  # Will be updated from config
+        self.cache_dir = "cache"
+        if not os.path.exists(self.cache_dir):
+            os.makedirs(self.cache_dir)
         
         # Ticker state
         self.ticker_x = width
@@ -170,7 +176,42 @@ class DisplayManager:
         except Exception as e:
             logger.error(f"❌ Failed to load image {media_url}: {e}")
             return None
-    
+
+    def load_video(self, media_url):
+        """Initialize VideoCapture for a URL (downloading if needed)"""
+        if not media_url:
+            return None
+            
+        if media_url in self.video_caps:
+            return self.video_caps[media_url]
+            
+        try:
+            # Download video to cache file first (OpenCV works better with local files)
+            filename = media_url.split('/')[-1]
+            local_path = os.path.join(self.cache_dir, filename)
+            
+            if not os.path.exists(local_path):
+                logger.info(f"⏳ Downloading video to cache: {media_url}")
+                video_url = f"{self.base_url}{media_url}"
+                response = requests.get(video_url, timeout=15, stream=True)
+                response.raise_for_status()
+                with open(local_path, 'wb') as f:
+                    for chunk in response.iter_content(chunk_size=8192):
+                        f.write(chunk)
+            
+            # Open with OpenCV
+            cap = cv2.VideoCapture(local_path)
+            if cap.isOpened():
+                self.video_caps[media_url] = cap
+                logger.info(f"✅ Created VideoCapture for: {media_url}")
+                return cap
+            else:
+                logger.error(f"❌ Failed to open video: {local_path}")
+                return None
+        except Exception as e:
+            logger.error(f"❌ Error loading video {media_url}: {e}")
+            return None
+
     def draw_notice_box(self, notice, x, y, width, height):
         """Draw a single notice in a box"""
         # Create box with shadow
@@ -221,14 +262,56 @@ class DisplayManager:
                     self.screen.blit(scaled_image, (img_x, content_y))
                     content_y += img_height + 10
             elif media_type == 'video':
-                # Draw video placeholder
-                placeholder_rect = pygame.Rect(content_x, content_y, content_width, 100)
-                pygame.draw.rect(self.screen, (240, 240, 240), placeholder_rect, border_radius=8)
-                
-                play_text = self.font_meta.render("🎥 VIDEO NOTICE", True, priority_color)
-                play_rect = play_text.get_rect(center=placeholder_rect.center)
-                self.screen.blit(play_text, play_rect)
-                content_y += 110
+                # Load and play video frame
+                cap = self.load_video(media_url)
+                if cap:
+                    ret, frame = cap.read()
+                    if not ret:
+                        # Reset to beginning of video
+                        cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+                        ret, frame = cap.read()
+                    
+                    if ret:
+                        # Convert frame (BGR to RGB)
+                        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                        # Rotate if needed (OpenCV might come in sideways depending on recording)
+                        frame = frame.transpose(1, 0, 2)
+                        
+                        # Create surface
+                        video_surface = pygame.surfarray.make_surface(frame)
+                        
+                        # Scale and blit (same logic as image)
+                        footer_height = 40
+                        available_height = (y + height) - content_y - footer_height
+                        
+                        img_width = content_width
+                        orig_width, orig_height = video_surface.get_size()
+                        aspect_ratio = orig_height / orig_width
+                        img_height = min(int(img_width * aspect_ratio), available_height)
+                        
+                        if img_height == available_height:
+                            img_width = int(img_height / aspect_ratio)
+                            
+                        scaled_video = pygame.transform.smoothscale(video_surface, (img_width, img_height))
+                        img_x = content_x + (content_width - img_width) // 2
+                        self.screen.blit(scaled_video, (img_x, content_y))
+                        content_y += img_height + 10
+                    else:
+                        # Fallback if frame failed
+                        pygame.draw.rect(self.screen, (240, 240, 240), 
+                                       pygame.Rect(content_x, content_y, content_width, 100), border_radius=8)
+                        play_text = self.font_meta.render("VIDEO LOADING...", True, priority_color)
+                        self.screen.blit(play_text, (content_x + 10, content_y + 40))
+                        content_y += 110
+                else:
+                    # Draw video placeholder
+                    placeholder_rect = pygame.Rect(content_x, content_y, content_width, 100)
+                    pygame.draw.rect(self.screen, (240, 240, 240), placeholder_rect, border_radius=8)
+                    
+                    play_text = self.font_meta.render("VIDEO NOTICE", True, priority_color)
+                    play_rect = play_text.get_rect(center=placeholder_rect.center)
+                    self.screen.blit(play_text, play_rect)
+                    content_y += 110
         
         # Description (wrapped) - minimal lines if image exists
         description = notice.get('description', '')
@@ -413,5 +496,9 @@ class DisplayManager:
     
     def cleanup(self):
         """Cleanup and quit"""
+        # Release video captures
+        for cap in self.video_caps.values():
+            cap.release()
+            
         pygame.quit()
         logger.info("Display cleanup complete")
