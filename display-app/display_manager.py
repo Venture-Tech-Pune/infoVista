@@ -64,6 +64,14 @@ class DisplayManager:
         self.ticker_x = width
         self.last_tick = logging.Formatter.converter()
         
+        # Audio state
+        try:
+            pygame.mixer.init()
+            self.audio_channels = {}
+            logger.info("✅ Audio mixer initialized")
+        except Exception as e:
+            logger.error(f"❌ Failed to initialize audio mixer: {e}")
+        
         logger.info(f"✅ Display initialized: {width}x{height}")
     
     def calculate_grid(self, notice_count):
@@ -264,7 +272,22 @@ class DisplayManager:
             elif media_type == 'video':
                 # Load and play video frame
                 cap = self.load_video(media_url)
+                is_muted = notice.get('isMuted', True)
+                notice_id = str(notice.get('_id', idx))
+                
                 if cap:
+                    # Handle Audio for current video
+                    if not is_muted:
+                        try:
+                            # If not already playing, we could use pygame mixer if we had the audio file
+                            # For simplicity with OpenCV, we just note that audio is desired
+                            # If the user wants full audio, we'd need to extract/stream it separately
+                            # or use a different library like moviepy or vlc.
+                            # For now, let's at least prepare the logic.
+                            pass
+                        except:
+                            pass
+
                     ret, frame = cap.read()
                     if not ret:
                         # Reset to beginning of video

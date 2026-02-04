@@ -61,6 +61,10 @@ const noticeSchema = new mongoose.Schema({
     viewCount: {
         type: Number,
         default: 0
+    },
+    isMuted: {
+        type: Boolean,
+        default: true
     }
 }, {
     timestamps: true

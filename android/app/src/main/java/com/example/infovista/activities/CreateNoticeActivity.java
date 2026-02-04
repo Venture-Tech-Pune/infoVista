@@ -13,6 +13,7 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.Spinner;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.VideoView;
@@ -44,7 +45,8 @@ public class CreateNoticeActivity extends AppCompatActivity {
 
     private EditText etTitle, etDescription, etScheduledAt, etExpiresAt;
     private Spinner spinnerPriority, spinnerCategory;
-    private Button btnSelectImage, btnSelectVideo, btnSubmit, btnUpload;
+    private Button btnSelectImage, btnSelectVideo, btnUpload;
+    private com.google.android.material.switchmaterial.SwitchMaterial switchMute;
     private ImageView ivPreview;
     private VideoView vvPreview;
     private ProgressBar progressBar;
@@ -87,6 +89,7 @@ public class CreateNoticeActivity extends AppCompatActivity {
         btnUpload = findViewById(R.id.btnUpload);
         ivPreview = findViewById(R.id.ivPreview);
         vvPreview = findViewById(R.id.vvPreview);
+        switchMute = findViewById(R.id.switchMute);
         progressBar = findViewById(R.id.progressBar);
 
         // Setup date/time pickers
@@ -335,6 +338,7 @@ public class CreateNoticeActivity extends AppCompatActivity {
             
             ivPreview.setVisibility(View.VISIBLE);
             vvPreview.setVisibility(View.GONE);
+            switchMute.setVisibility(View.GONE);
             ivPreview.setImageURI(selectedImageUri);
 
             // Update preview image
@@ -346,6 +350,7 @@ public class CreateNoticeActivity extends AppCompatActivity {
 
             ivPreview.setVisibility(View.GONE);
             vvPreview.setVisibility(View.VISIBLE);
+            switchMute.setVisibility(View.VISIBLE);
             vvPreview.setVideoURI(selectedVideoUri);
             vvPreview.start();
 
@@ -462,6 +467,7 @@ public class CreateNoticeActivity extends AppCompatActivity {
         RequestBody categoryPart = RequestBody.create(MediaType.parse("text/plain"), category);
         RequestBody durationPart = RequestBody.create(MediaType.parse("text/plain"), String.valueOf(duration));
         RequestBody isActivePart = RequestBody.create(MediaType.parse("text/plain"), String.valueOf(isActive));
+        RequestBody isMutedPart = RequestBody.create(MediaType.parse("text/plain"), String.valueOf(switchMute.isChecked()));
 
         String scheduledAtIso = toIsoString(scheduledAtTimestamp);
         String expiresAtIso = toIsoString(expiresAtTimestamp);
@@ -494,11 +500,11 @@ public class CreateNoticeActivity extends AppCompatActivity {
         Call<ApiResponse<Notice>> call;
         if (isEditMode) {
             call = ApiClient.getApiService().updateNotice(
-                    authToken, noticeToEdit.getId(), titlePart, descriptionPart, priorityPart, categoryPart, durationPart, isActivePart, scheduledAtPart, expiresAtPart, mediaPart
+                    authToken, noticeToEdit.getId(), titlePart, descriptionPart, priorityPart, categoryPart, durationPart, isActivePart, isMutedPart, scheduledAtPart, expiresAtPart, mediaPart
             );
         } else {
             call = ApiClient.getApiService().createNotice(
-                    authToken, titlePart, descriptionPart, priorityPart, categoryPart, durationPart, isActivePart, scheduledAtPart, expiresAtPart, mediaPart
+                    authToken, titlePart, descriptionPart, priorityPart, categoryPart, durationPart, isActivePart, isMutedPart, scheduledAtPart, expiresAtPart, mediaPart
             );
         }
 
