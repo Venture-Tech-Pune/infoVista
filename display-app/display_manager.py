@@ -198,46 +198,42 @@ class DisplayManager:
         self.screen.blit(title_surface, (content_x, content_y))
         content_y += 45
         
-        # Check if notice has image
+        # Check if notice has media
         media_url = notice.get('mediaUrl')
         media_type = notice.get('mediaType')
         
-        if media_url and media_type == 'image':
-            # Load and display image
-            image_surface = self.load_image(media_url)
-            if image_surface:
-                # Reserve space for footer (category + time badges)
-                footer_height = 40
+        if media_url:
+            if media_type == 'image':
+                # Load and display image
+                image_surface = self.load_image(media_url)
+                if image_surface:
+                    # Reserve space for footer
+                    footer_height = 40
+                    available_height = (y + height) - content_y - footer_height
+                    img_width = content_width
+                    orig_width, orig_height = image_surface.get_size()
+                    aspect_ratio = orig_height / orig_width
+                    img_height = min(int(img_width * aspect_ratio), available_height)
+                    if img_height == available_height:
+                        img_width = int(img_height / aspect_ratio)
+                    scaled_image = pygame.transform.smoothscale(image_surface, (img_width, img_height))
+                    img_x = content_x + (content_width - img_width) // 2
+                    self.screen.blit(scaled_image, (img_x, content_y))
+                    content_y += img_height + 10
+            elif media_type == 'video':
+                # Draw video placeholder
+                placeholder_rect = pygame.Rect(content_x, content_y, content_width, 100)
+                pygame.draw.rect(self.screen, (240, 240, 240), placeholder_rect, border_radius=8)
                 
-                # Calculate available space for image
-                available_height = (y + height) - content_y - footer_height
-                
-                # Use full width for image
-                img_width = content_width
-                
-                # Get original image dimensions
-                orig_width, orig_height = image_surface.get_size()
-                
-                # Calculate height maintaining aspect ratio
-                aspect_ratio = orig_height / orig_width
-                img_height = min(int(img_width * aspect_ratio), available_height)
-                
-                # If height limited by available space, recalculate width
-                if img_height == available_height:
-                    img_width = int(img_height / aspect_ratio)
-                
-                # Scale image
-                scaled_image = pygame.transform.smoothscale(image_surface, (img_width, img_height))
-                
-                # Center image horizontally only if width was reduced
-                img_x = content_x + (content_width - img_width) // 2
-                self.screen.blit(scaled_image, (img_x, content_y))
-                content_y += img_height + 10
+                play_text = self.font_meta.render("🎥 VIDEO NOTICE", True, priority_color)
+                play_rect = play_text.get_rect(center=placeholder_rect.center)
+                self.screen.blit(play_text, play_rect)
+                content_y += 110
         
         # Description (wrapped) - minimal lines if image exists
         description = notice.get('description', '')
         if description:
-            # Only show 1-2 lines if image exists to maximize image space
+            # Only show 1-2 lines if image/video exists to maximize space
             max_lines = 1 if media_url else 4
             wrapped_desc = textwrap.wrap(description, width=35)
             for i, line in enumerate(wrapped_desc[:max_lines]):
