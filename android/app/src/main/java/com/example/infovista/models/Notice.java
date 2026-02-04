@@ -46,6 +46,9 @@ public class Notice {
     @SerializedName("viewCount")
     private int viewCount;
 
+    @SerializedName("isMuted")
+    private boolean isMuted;
+
     @SerializedName("createdAt")
     private String createdAt;
 
@@ -58,6 +61,7 @@ public class Notice {
         this.category = "general";
         this.mediaType = "text";
         this.isActive = true;
+        this.isMuted = true;
         this.displayDuration = 10;
     }
 
@@ -109,4 +113,7 @@ public class Notice {
 
     public String getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(String updatedAt) { this.updatedAt = updatedAt; }
+
+    public boolean isMuted() { return isMuted; }
+    public void setMuted(boolean muted) { isMuted = muted; }
 }

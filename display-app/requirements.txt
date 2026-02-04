@@ -1,7 +1,6 @@
 requests
-pygame>=2.6.0
-python-socketio[client]
+pygame
+python-socketio
 python-dotenv
 Pillow
 opencv-python
-numpy

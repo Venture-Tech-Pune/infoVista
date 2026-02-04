@@ -13,8 +13,8 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.Spinner;
-import android.widget.Switch;
 import android.widget.TextView;
+import com.google.android.material.switchmaterial.SwitchMaterial;
 import android.widget.Toast;
 import android.widget.VideoView;
 
@@ -46,7 +46,7 @@ public class CreateNoticeActivity extends AppCompatActivity {
     private EditText etTitle, etDescription, etScheduledAt, etExpiresAt;
     private Spinner spinnerPriority, spinnerCategory;
     private Button btnSelectImage, btnSelectVideo, btnUpload;
-    private com.google.android.material.switchmaterial.SwitchMaterial switchMute;
+    private SwitchMaterial switchMute;
     private ImageView ivPreview;
     private VideoView vvPreview;
     private ProgressBar progressBar;
@@ -248,23 +248,25 @@ public class CreateNoticeActivity extends AppCompatActivity {
             }
 
             // Load existing image if available
-            if (noticeToEdit.getMediaUrl() != null && !noticeToEdit.getMediaUrl().isEmpty() 
-                    && "image".equals(noticeToEdit.getMediaType())) {
-                ivPreview.setVisibility(View.VISIBLE);
-                
-                String baseUrl = Constants.BASE_URL.replace("/api/", ""); // Basic cleanup
-                // Use the fix: remove leading slash if present
-                String mediaUrl = noticeToEdit.getMediaUrl().startsWith("/") 
-                        ? noticeToEdit.getMediaUrl().substring(1) 
-                        : noticeToEdit.getMediaUrl();
-                        
-                String imageUrl = Constants.BASE_URL + mediaUrl;
-                
-                com.bumptech.glide.Glide.with(this)
-                        .load(imageUrl)
-                        .placeholder(R.drawable.ic_image_placeholder)
-                        .error(R.drawable.ic_image_placeholder)
-                        .into(ivPreview);
+            if (noticeToEdit.getMediaUrl() != null && !noticeToEdit.getMediaUrl().isEmpty()) {
+                if ("image".equals(noticeToEdit.getMediaType())) {
+                    ivPreview.setVisibility(View.VISIBLE);
+                    String mediaUrl = noticeToEdit.getMediaUrl().startsWith("/")
+                            ? noticeToEdit.getMediaUrl().substring(1)
+                            : noticeToEdit.getMediaUrl();
+                    String imageUrl = Constants.BASE_URL + mediaUrl;
+                    com.bumptech.glide.Glide.with(this)
+                            .load(imageUrl)
+                            .placeholder(R.drawable.ic_image_placeholder)
+                            .error(R.drawable.ic_image_placeholder)
+                            .into(ivPreview);
+                } else if ("video".equals(noticeToEdit.getMediaType())) {
+                    vvPreview.setVisibility(View.VISIBLE);
+                    switchMute.setVisibility(View.VISIBLE);
+                    switchMute.setChecked(noticeToEdit.isMuted());
+                    // For video in edit mode, we just show the placeholder or the VideoView with a static frame
+                    // vvPreview.setVideoPath(Constants.BASE_URL + mediaUrl); // Could be slow to buffer
+                }
             }
         }
     }
