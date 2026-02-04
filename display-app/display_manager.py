@@ -5,6 +5,7 @@ import requests
 import io
 import os
 import cv2
+import numpy as np
 from datetime import datetime
 from PIL import Image
 
@@ -125,7 +126,7 @@ class DisplayManager:
             x = padding + col * (box_width + padding)
             y = header_height + padding + row * (box_height + padding)
             
-            self.draw_notice_box(notice, x, y, box_width, box_height)
+            self.draw_notice_box(notice, x, y, box_width, box_height, idx)
     
     def draw_header(self, notice_count):
         """Draw header with title and notice count"""
@@ -220,7 +221,7 @@ class DisplayManager:
             logger.error(f"❌ Error loading video {media_url}: {e}")
             return None
 
-    def draw_notice_box(self, notice, x, y, width, height):
+    def draw_notice_box(self, notice, x, y, width, height, idx=0):
         """Draw a single notice in a box"""
         # Create box with shadow
         shadow_rect = pygame.Rect(x + 4, y + 4, width, height)
@@ -273,6 +274,8 @@ class DisplayManager:
                 # Load and play video frame
                 cap = self.load_video(media_url)
                 is_muted = notice.get('isMuted', True)
+                if isinstance(is_muted, str):
+                    is_muted = is_muted.lower() == 'true'
                 notice_id = str(notice.get('_id', idx))
                 
                 if cap:
@@ -318,6 +321,16 @@ class DisplayManager:
                         scaled_video = pygame.transform.smoothscale(video_surface, (img_width, img_height))
                         img_x = content_x + (content_width - img_width) // 2
                         self.screen.blit(scaled_video, (img_x, content_y))
+
+                        # Muted Overlay
+                        if is_muted:
+                            mute_font = pygame.font.SysFont('Arial', 24, bold=True)
+                            mute_text = mute_font.render("🔇 MUTED", True, (255, 255, 255))
+                            mute_bg = pygame.Surface((mute_text.get_width() + 20, mute_text.get_height() + 10), pygame.SRCALPHA)
+                            mute_bg.fill((0, 0, 0, 180))
+                            self.screen.blit(mute_bg, (img_x + 10, content_y + 10))
+                            self.screen.blit(mute_text, (img_x + 20, content_y + 15))
+
                         content_y += img_height + 10
                     else:
                         # Fallback if frame failed
