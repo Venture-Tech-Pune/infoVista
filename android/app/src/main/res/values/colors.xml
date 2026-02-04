@@ -29,6 +29,11 @@
     <color name="priority_medium">#4FC3F7</color>
     <color name="priority_low">#81C784</color>
 
+    <!-- Notice Classification Colors -->
+    <color name="classification_live">#4CAF50</color>
+    <color name="classification_scheduled">#FF9800</color>
+    <color name="classification_expired">#9E9E9E</color>
+
     <!-- Status Colors -->
     <color name="success">#81C784</color>
     <color name="warning">#FFB74D</color>

@@ -20,10 +20,15 @@ import com.example.infovista.adapters.NoticeAdapter;
 import com.example.infovista.models.ApiResponse;
 import com.example.infovista.models.Notice;
 import com.example.infovista.network.ApiClient;
+import com.google.android.material.tabs.TabLayout;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.example.infovista.utils.Constants;
 import com.example.infovista.utils.SharedPrefManager;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.gson.Gson;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+import java.util.TimeZone;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -42,7 +47,9 @@ public class DashboardActivity extends AppCompatActivity {
     private TextView tvEmpty, tvWelcome;
     private SwipeRefreshLayout swipeRefresh;
     private FloatingActionButton fabCreate;
+    private TabLayout tabLayout;
     
+    private List<Notice> allNotices = new ArrayList<>();
     private SharedPrefManager prefManager;
     private String authToken;
 
@@ -69,6 +76,8 @@ public class DashboardActivity extends AppCompatActivity {
         // Welcome message
         tvWelcome.setText("Welcome, " + prefManager.getUserName());
 
+        tabLayout = findViewById(R.id.tabLayout);
+
         // Setup RecyclerView
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         noticeAdapter = new NoticeAdapter(this, new ArrayList<>(), notice -> {
@@ -94,11 +103,69 @@ public class DashboardActivity extends AppCompatActivity {
             startActivity(new Intent(DashboardActivity.this, NoticeBoardPreviewActivity.class));
         });
 
+        // Tab change listener
+        tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                filterNotices(tab.getPosition());
+            }
+
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {}
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {}
+        });
+
         // Swipe to refresh
         swipeRefresh.setOnRefreshListener(() -> loadNotices());
 
         // Load notices
         loadNotices();
+    }
+
+    private void filterNotices(int position) {
+        List<Notice> filteredList = new ArrayList<>();
+        long now = System.currentTimeMillis();
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault());
+        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+
+        for (Notice notice : allNotices) {
+            long scheduledAt = now;
+            long expiresAt = -1;
+
+            try {
+                if (notice.getScheduledAt() != null) {
+                    Date d = sdf.parse(notice.getScheduledAt());
+                    if (d != null) scheduledAt = d.getTime();
+                }
+                if (notice.getExpiresAt() != null) {
+                    Date d = sdf.parse(notice.getExpiresAt());
+                    if (d != null) expiresAt = d.getTime();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            boolean isLive = notice.isActive() && scheduledAt <= now && (expiresAt == -1 || expiresAt > now);
+            boolean isScheduled = notice.isActive() && scheduledAt > now;
+            boolean isExpired = expiresAt != -1 && expiresAt <= now;
+
+            if (position == 0 && isLive) {
+                filteredList.add(notice);
+            } else if (position == 1 && isScheduled) {
+                filteredList.add(notice);
+            } else if (position == 2 && isExpired) {
+                filteredList.add(notice);
+            }
+        }
+
+        noticeAdapter.updateNotices(filteredList);
+        if (filteredList.isEmpty()) {
+            tvEmpty.setVisibility(View.VISIBLE);
+        } else {
+            tvEmpty.setVisibility(View.GONE);
+        }
     }
 
     private void loadNotices() {
@@ -120,14 +187,8 @@ public class DashboardActivity extends AppCompatActivity {
                     ApiResponse<List<Notice>> apiResponse = response.body();
 
                     if (apiResponse.isSuccess() && apiResponse.getData() != null) {
-                        List<Notice> notices = apiResponse.getData();
-
-                        if (notices.isEmpty()) {
-                            tvEmpty.setVisibility(View.VISIBLE);
-                        } else {
-                            tvEmpty.setVisibility(View.GONE);
-                            noticeAdapter.updateNotices(notices);
-                        }
+                        allNotices = apiResponse.getData();
+                        filterNotices(tabLayout.getSelectedTabPosition());
                     }
                 } else {
                     Toast.makeText(DashboardActivity.this, "Failed to load notices", Toast.LENGTH_SHORT).show();
@@ -166,6 +227,9 @@ public class DashboardActivity extends AppCompatActivity {
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             startActivity(intent);
             finish();
+            return true;
+        } else if (id == R.id.action_history) {
+            startActivity(new Intent(DashboardActivity.this, NoticeHistoryActivity.class));
             return true;
         } else if (id == R.id.action_refresh) {
             loadNotices();

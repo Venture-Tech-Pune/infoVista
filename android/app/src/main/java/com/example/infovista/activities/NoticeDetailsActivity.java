@@ -6,6 +6,9 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.MediaController;
+import android.widget.ProgressBar;
+import android.widget.VideoView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
@@ -35,6 +38,8 @@ public class NoticeDetailsActivity extends AppCompatActivity {
 
     private TextView tvTitle, tvDescription, tvPriority, tvCategory, tvDate, tvCreator, tvDuration;
     private ImageView ivMedia;
+    private VideoView videoView;
+    private ProgressBar pbVideoLoading;
     private MaterialButton btnEdit, btnDelete, btnUpload;
     
     private Notice notice;
@@ -67,6 +72,8 @@ public class NoticeDetailsActivity extends AppCompatActivity {
         tvCreator = findViewById(R.id.tvCreator);
         tvDuration = findViewById(R.id.tvDuration);
         ivMedia = findViewById(R.id.ivMedia);
+        videoView = findViewById(R.id.videoView);
+        pbVideoLoading = findViewById(R.id.pbVideoLoading);
         btnEdit = findViewById(R.id.btnEdit);
         btnDelete = findViewById(R.id.btnDelete);
         btnUpload = findViewById(R.id.btnUpload);
@@ -138,21 +145,52 @@ public class NoticeDetailsActivity extends AppCompatActivity {
             tvCreator.setText("By: " + notice.getCreatedBy().getName());
         }
 
-        // Load image
-        if (notice.getMediaUrl() != null && !notice.getMediaUrl().isEmpty()
-                && notice.getMediaType() != null && notice.getMediaType().equals("image")) {
-            ivMedia.setVisibility(View.VISIBLE);
+        // Load media (image or video)
+        String mediaUrl = notice.getMediaUrl();
+        String mediaType = notice.getMediaType();
 
-            // Construct proper image URL - remove leading slash from mediaUrl
-            String imageUrl = Constants.BASE_URL + notice.getMediaUrl().substring(1);
+        if (mediaUrl != null && !mediaUrl.isEmpty() && mediaType != null) {
+            String fullUrl = Constants.BASE_URL + mediaUrl.substring(1);
 
-            Glide.with(this)
-                    .load(imageUrl)
-                    .placeholder(R.drawable.ic_image_placeholder)
-                    .error(R.drawable.ic_image_placeholder)
-                    .into(ivMedia);
+            if (mediaType.equals("image")) {
+                ivMedia.setVisibility(View.VISIBLE);
+                videoView.setVisibility(View.GONE);
+                pbVideoLoading.setVisibility(View.GONE);
+
+                Glide.with(this)
+                        .load(fullUrl)
+                        .placeholder(R.drawable.ic_image_placeholder)
+                        .error(R.drawable.ic_image_placeholder)
+                        .into(ivMedia);
+            } else if (mediaType.equals("video")) {
+                ivMedia.setVisibility(View.GONE);
+                videoView.setVisibility(View.VISIBLE);
+                pbVideoLoading.setVisibility(View.VISIBLE);
+
+                MediaController mediaController = new MediaController(this);
+                mediaController.setAnchorView(videoView);
+                videoView.setMediaController(mediaController);
+                videoView.setVideoPath(fullUrl);
+
+                videoView.setOnPreparedListener(mp -> {
+                    pbVideoLoading.setVisibility(View.GONE);
+                    videoView.start();
+                });
+
+                videoView.setOnErrorListener((mp, what, extra) -> {
+                    pbVideoLoading.setVisibility(View.GONE);
+                    Toast.makeText(NoticeDetailsActivity.this, "Error playing video", Toast.LENGTH_SHORT).show();
+                    return true;
+                });
+            } else {
+                ivMedia.setVisibility(View.GONE);
+                videoView.setVisibility(View.GONE);
+                pbVideoLoading.setVisibility(View.GONE);
+            }
         } else {
             ivMedia.setVisibility(View.GONE);
+            videoView.setVisibility(View.GONE);
+            pbVideoLoading.setVisibility(View.GONE);
         }
 
         // Check if notice is a draft (not active) and show Upload button

@@ -107,6 +107,33 @@
 
                 </androidx.cardview.widget.CardView>
 
+                <!-- Notice Classification Tabs -->
+                <com.google.android.material.tabs.TabLayout
+                    android:id="@+id/tabLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@color/surface"
+                    app:tabTextColor="@color/text_secondary"
+                    app:tabSelectedTextColor="@color/white"
+                    app:tabIndicatorColor="@color/accent">
+
+                    <com.google.android.material.tabs.TabItem
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Live" />
+
+                    <com.google.android.material.tabs.TabItem
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Scheduled" />
+
+                    <com.google.android.material.tabs.TabItem
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Expired" />
+
+                </com.google.android.material.tabs.TabLayout>
+
                 <!-- Notices Section Header -->
                 <TextView
                     android:layout_width="match_parent"

@@ -36,7 +36,7 @@
         <activity
             android:name=".activities.LoginActivity"
             android:exported="false"
-            android:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar" />
+            android:theme="@style/Theme.InfoVista" />
 
         <!-- Dashboard Activity -->
         <activity
@@ -58,6 +58,12 @@
         <!-- Notice Board Preview Activity -->
         <activity
             android:name=".activities.NoticeBoardPreviewActivity"
+            android:exported="false"
+            android:parentActivityName=".activities.DashboardActivity" />
+
+        <!-- Notice History Activity -->
+        <activity
+            android:name=".activities.NoticeHistoryActivity"
             android:exported="false"
             android:parentActivityName=".activities.DashboardActivity" />
 

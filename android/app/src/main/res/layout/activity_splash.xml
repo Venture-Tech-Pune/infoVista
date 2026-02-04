@@ -10,10 +10,7 @@
         android:layout_height="wrap_content"
         android:gravity="center"
         android:orientation="vertical">
-
-
     </LinearLayout>
-
     <ProgressBar
         android:id="@+id/progressBar2"
         android:layout_width="wrap_content"

@@ -61,15 +61,34 @@
                 android:textStyle="bold"
                 android:layout_marginBottom="16dp" />
 
-            <!-- Image -->
-            <ImageView
-                android:id="@+id/ivMedia"
+            <!-- Media (Image or Video) -->
+            <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="300dp"
-                android:layout_marginBottom="16dp"
-                android:scaleType="centerCrop"
-                android:visibility="gone"
-                android:contentDescription="Notice Image" />
+                android:layout_marginBottom="16dp">
+
+                <ImageView
+                    android:id="@+id/ivMedia"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="centerCrop"
+                    android:visibility="gone"
+                    android:contentDescription="Notice Image" />
+
+                <VideoView
+                    android:id="@+id/videoView"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_gravity="center"
+                    android:visibility="gone" />
+
+                <ProgressBar
+                    android:id="@+id/pbVideoLoading"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:visibility="gone" />
+            </FrameLayout>
 
             <!-- Description -->
             <TextView

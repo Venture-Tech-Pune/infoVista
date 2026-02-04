@@ -233,14 +233,14 @@
 
             </com.google.android.material.textfield.TextInputLayout>
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnSelectImage"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 android:text="Select Image"
                 android:textColor="@color/white"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
+                style="@style/Widget.InfoVista.Button.Outlined" />
 
             <ImageView
                 android:id="@+id/ivPreview"
