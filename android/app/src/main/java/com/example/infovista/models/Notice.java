@@ -61,7 +61,7 @@ public class Notice {
         this.category = "general";
         this.mediaType = "text";
         this.isActive = true;
-        this.isMuted = true;
+        this.isMuted = false;
         this.displayDuration = 10;
     }
 

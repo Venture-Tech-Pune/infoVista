@@ -283,8 +283,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:text="Mute Video on Display Board"
-                android:checked="true"
+                android:text="Enable Video Sound"
+                android:checked="false"
                 android:visibility="gone" />
 
             <ProgressBar

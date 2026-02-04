@@ -263,7 +263,7 @@ public class CreateNoticeActivity extends AppCompatActivity {
                 } else if ("video".equals(noticeToEdit.getMediaType())) {
                     vvPreview.setVisibility(View.VISIBLE);
                     switchMute.setVisibility(View.VISIBLE);
-                    switchMute.setChecked(noticeToEdit.isMuted());
+                    switchMute.setChecked(!noticeToEdit.isMuted());
                     // For video in edit mode, we just show the placeholder or the VideoView with a static frame
                     // vvPreview.setVideoPath(Constants.BASE_URL + mediaUrl); // Could be slow to buffer
                 }
@@ -469,7 +469,9 @@ public class CreateNoticeActivity extends AppCompatActivity {
         RequestBody categoryPart = RequestBody.create(MediaType.parse("text/plain"), category);
         RequestBody durationPart = RequestBody.create(MediaType.parse("text/plain"), String.valueOf(duration));
         RequestBody isActivePart = RequestBody.create(MediaType.parse("text/plain"), String.valueOf(isActive));
-        RequestBody isMutedPart = RequestBody.create(MediaType.parse("text/plain"), String.valueOf(switchMute.isChecked()));
+        boolean isMuted = !switchMute.isChecked();
+        android.util.Log.d("NoticeDebug", "Submitting notice: " + title + " | isMuted: " + isMuted);
+        RequestBody isMutedPart = RequestBody.create(MediaType.parse("text/plain"), String.valueOf(isMuted));
 
         String scheduledAtIso = toIsoString(scheduledAtTimestamp);
         String expiresAtIso = toIsoString(expiresAtTimestamp);

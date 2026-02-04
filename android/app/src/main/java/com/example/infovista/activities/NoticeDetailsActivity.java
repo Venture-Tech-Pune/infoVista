@@ -187,6 +187,11 @@ public class NoticeDetailsActivity extends AppCompatActivity {
 
                 videoView.setOnPreparedListener(mp -> {
                     pbVideoLoading.setVisibility(View.GONE);
+                    if (notice.isMuted()) {
+                        mp.setVolume(0f, 0f);
+                    } else {
+                        mp.setVolume(1f, 1f);
+                    }
                     videoView.start();
                 });
 

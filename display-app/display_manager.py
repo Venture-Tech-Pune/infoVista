@@ -8,6 +8,10 @@ import cv2
 import numpy as np
 from datetime import datetime
 from PIL import Image
+try:
+    from ffpyplayer.player import MediaPlayer
+except ImportError:
+    MediaPlayer = None
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +60,7 @@ class DisplayManager:
         # Cache
         self.image_cache = {}
         self.video_caps = {}
+        self.video_players = {}
         self.base_url = "http://localhost:3000"  # Will be updated from config
         self.cache_dir = "cache"
         if not os.path.exists(self.cache_dir):
@@ -186,21 +191,20 @@ class DisplayManager:
             logger.error(f"❌ Failed to load image {media_url}: {e}")
             return None
 
-    def load_video(self, media_url):
-        """Initialize VideoCapture for a URL (downloading if needed)"""
-        if not media_url:
+    def load_video(self, media_url, is_muted=True):
+        """Initialize MediaPlayer for a URL (downloading if needed)"""
+        if not media_url or MediaPlayer is None:
             return None
             
-        if media_url in self.video_caps:
-            return self.video_caps[media_url]
+        if media_url in self.video_players:
+            return self.video_players[media_url]
             
         try:
-            # Download video to cache file first (OpenCV works better with local files)
             filename = media_url.split('/')[-1]
             local_path = os.path.join(self.cache_dir, filename)
             
             if not os.path.exists(local_path):
-                logger.info(f"⏳ Downloading video to cache: {media_url}")
+                logger.info(f"⏳ Downloading video for player: {media_url}")
                 video_url = f"{self.base_url}{media_url}"
                 response = requests.get(video_url, timeout=15, stream=True)
                 response.raise_for_status()
@@ -208,17 +212,14 @@ class DisplayManager:
                     for chunk in response.iter_content(chunk_size=8192):
                         f.write(chunk)
             
-            # Open with OpenCV
-            cap = cv2.VideoCapture(local_path)
-            if cap.isOpened():
-                self.video_caps[media_url] = cap
-                logger.info(f"✅ Created VideoCapture for: {media_url}")
-                return cap
-            else:
-                logger.error(f"❌ Failed to open video: {local_path}")
-                return None
+            # Create player
+            ff_opts = {'paused': False, 'volume': 0.0 if is_muted else 1.0}
+            player = MediaPlayer(local_path, ff_opts=ff_opts)
+            self.video_players[media_url] = player
+            logger.info(f"✅ Created ffpyplayer for: {media_url} (Muted: {is_muted})")
+            return player
         except Exception as e:
-            logger.error(f"❌ Error loading video {media_url}: {e}")
+            logger.error(f"❌ Error loading video player {media_url}: {e}")
             return None
 
     def draw_notice_box(self, notice, x, y, width, height, idx=0):
@@ -271,42 +272,31 @@ class DisplayManager:
                     self.screen.blit(scaled_image, (img_x, content_y))
                     content_y += img_height + 10
             elif media_type == 'video':
-                # Load and play video frame
-                cap = self.load_video(media_url)
-                is_muted = notice.get('isMuted', True)
-                if isinstance(is_muted, str):
-                    is_muted = is_muted.lower() == 'true'
-                notice_id = str(notice.get('_id', idx))
+                # Load and play video using ffpyplayer
+                raw_muted = notice.get('isMuted')
+                is_sound_enabled = not raw_muted if isinstance(raw_muted, bool) else (str(raw_muted).lower() == 'false' if raw_muted is not None else True)
                 
-                if cap:
-                    # Handle Audio for current video
-                    if not is_muted:
-                        try:
-                            # If not already playing, we could use pygame mixer if we had the audio file
-                            # For simplicity with OpenCV, we just note that audio is desired
-                            # If the user wants full audio, we'd need to extract/stream it separately
-                            # or use a different library like moviepy or vlc.
-                            # For now, let's at least prepare the logic.
-                            pass
-                        except:
-                            pass
-
-                    ret, frame = cap.read()
-                    if not ret:
-                        # Reset to beginning of video
-                        cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
-                        ret, frame = cap.read()
+                logger.debug(f"📹 Video Notice: '{notice.get('title')}' | ID: {notice.get('_id')} | Raw isMuted: {raw_muted} | Sound Enabled: {is_sound_enabled}")
+                
+                player = self.load_video(media_url, is_muted=not is_sound_enabled)
+                
+                if player:
+                    # Sync volume and ensure not paused
+                    player.set_volume(1.0 if is_sound_enabled else 0.0)
+                    if player.get_pause():
+                        player.set_pause(False)
                     
-                    if ret:
-                        # Convert frame (BGR to RGB)
-                        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                        # Rotate if needed (OpenCV might come in sideways depending on recording)
-                        frame = frame.transpose(1, 0, 2)
+                    # Get frame
+                    frame, val = player.get_frame()
+                    if val != 'eof' and frame is not None:
+                        img, t = frame
                         
-                        # Create surface
-                        video_surface = pygame.surfarray.make_surface(frame)
+                        # Convert to pygame surface
+                        size = img.get_size()
+                        data = img.to_bytearray()[0]
+                        video_surface = pygame.image.frombuffer(data, size, 'RGB')
                         
-                        # Scale and blit (same logic as image)
+                        # Scale and blit
                         footer_height = 40
                         available_height = (y + height) - content_y - footer_height
                         
@@ -322,18 +312,22 @@ class DisplayManager:
                         img_x = content_x + (content_width - img_width) // 2
                         self.screen.blit(scaled_video, (img_x, content_y))
 
-                        # Muted Overlay
-                        if is_muted:
+                        # Sound Indicator
+                        if not is_sound_enabled:
                             mute_font = pygame.font.SysFont('Arial', 24, bold=True)
                             mute_text = mute_font.render("🔇 MUTED", True, (255, 255, 255))
                             mute_bg = pygame.Surface((mute_text.get_width() + 20, mute_text.get_height() + 10), pygame.SRCALPHA)
                             mute_bg.fill((0, 0, 0, 180))
                             self.screen.blit(mute_bg, (img_x + 10, content_y + 10))
                             self.screen.blit(mute_text, (img_x + 20, content_y + 15))
-
+                        
                         content_y += img_height + 10
+                    elif val == 'eof':
+                        # Restart video
+                        player.seek(0, relative=False)
+                        content_y += 110 # Placeholder space
                     else:
-                        # Fallback if frame failed
+                        # Draw placeholder while loading/buffering
                         pygame.draw.rect(self.screen, (240, 240, 240), 
                                        pygame.Rect(content_x, content_y, content_width, 100), border_radius=8)
                         play_text = self.font_meta.render("VIDEO LOADING...", True, priority_color)

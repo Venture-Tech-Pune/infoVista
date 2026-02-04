@@ -4,3 +4,4 @@ python-socketio
 python-dotenv
 Pillow
 opencv-python
+ffpyplayer

@@ -142,6 +142,14 @@ exports.createNotice = async (req, res) => {
             createdBy: req.user.id
         };
 
+        // Convert string booleans from multipart/form-data
+        if (typeof noticeData.isActive === 'string') {
+            noticeData.isActive = noticeData.isActive === 'true';
+        }
+        if (typeof noticeData.isMuted === 'string') {
+            noticeData.isMuted = noticeData.isMuted === 'true';
+        }
+
         // If file uploaded, add media URL
         if (req.file) {
             noticeData.mediaUrl = `/uploads/${req.file.filename}`;
@@ -222,7 +230,13 @@ exports.updateNotice = async (req, res) => {
 
         // Update fields
         Object.keys(req.body).forEach(key => {
-            notice[key] = req.body[key];
+            let value = req.body[key];
+            if (key === 'isActive' || key === 'isMuted') {
+                if (typeof value === 'string') {
+                    value = value === 'true';
+                }
+            }
+            notice[key] = value;
         });
 
         // If new file uploaded
