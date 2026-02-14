@@ -273,16 +273,28 @@ class DisplayManager:
                     content_y += img_height + 10
             elif media_type == 'video':
                 # Load and play video using ffpyplayer
+                # Enhanced boolean parsing for mute flag
                 raw_muted = notice.get('isMuted')
-                is_sound_enabled = not raw_muted if isinstance(raw_muted, bool) else (str(raw_muted).lower() == 'false' if raw_muted is not None else True)
                 
-                logger.debug(f"📹 Video Notice: '{notice.get('title')}' | ID: {notice.get('_id')} | Raw isMuted: {raw_muted} | Sound Enabled: {is_sound_enabled}")
+                # Robust parsing: check for boolean True, string 'true', number 1
+                is_muted = False
+                if isinstance(raw_muted, bool):
+                    is_muted = raw_muted
+                elif isinstance(raw_muted, str):
+                    is_muted = raw_muted.lower() in ('true', '1', 'yes', 'on')
+                elif isinstance(raw_muted, (int, float)):
+                    is_muted = bool(raw_muted)
                 
-                player = self.load_video(media_url, is_muted=not is_sound_enabled)
+                is_sound_enabled = not is_muted
+                
+                # logger.debug(f"📹 Video Notice: '{notice.get('title')}' | ID: {notice.get('_id')} | Raw isMuted: {raw_muted} | Sound Enabled: {is_sound_enabled}")
+                
+                player = self.load_video(media_url, is_muted=is_muted)
                 
                 if player:
-                    # Sync volume and ensure not paused
-                    player.set_volume(1.0 if is_sound_enabled else 0.0)
+                    # Sync volume explicitly every frame to ensure it sticks
+                    target_volume = 1.0 if is_sound_enabled else 0.0
+                    player.set_volume(target_volume)
                     if player.get_pause():
                         player.set_pause(False)
                     
