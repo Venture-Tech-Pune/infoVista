@@ -196,8 +196,20 @@ class DisplayManager:
         if not media_url or MediaPlayer is None:
             return None
             
+        # Check if player exists
         if media_url in self.video_players:
-            return self.video_players[media_url]
+            entry = self.video_players[media_url]
+            # Check if mute state matches
+            if entry.get('is_muted') == is_muted:
+                return entry.get('player')
+            else:
+                # State changed, simple volume update failed previously, so we recreate
+                logger.info(f"🔄 Mute state changed for {media_url} (Now Muted: {is_muted}). Recreating player.")
+                try:
+                    entry.get('player').close_player()
+                except:
+                    pass
+                del self.video_players[media_url]
             
         try:
             filename = media_url.split('/')[-1]
@@ -213,9 +225,19 @@ class DisplayManager:
                         f.write(chunk)
             
             # Create player
-            ff_opts = {'paused': False, 'volume': 0.0 if is_muted else 1.0}
+            # Using loop=0 (infinite) if supported by opts, otherwise handled manually
+            # Critical: Set volume in ff_opts during Init
+            ff_opts = {'paused': False, 'volume': 0.0 if is_muted else 1.0, 'loop': 0}
             player = MediaPlayer(local_path, ff_opts=ff_opts)
-            self.video_players[media_url] = player
+            
+            # Explicitly set mute if method exists
+            if hasattr(player, 'set_mute'):
+                try:
+                    player.set_mute(is_muted)
+                except:
+                    pass
+            
+            self.video_players[media_url] = {'player': player, 'is_muted': is_muted}
             logger.info(f"✅ Created ffpyplayer for: {media_url} (Muted: {is_muted})")
             return player
         except Exception as e:
@@ -294,7 +316,11 @@ class DisplayManager:
                 if player:
                     # Sync volume explicitly every frame to ensure it sticks
                     target_volume = 1.0 if is_sound_enabled else 0.0
-                    player.set_volume(target_volume)
+                    try:
+                        player.set_volume(target_volume)
+                    except:
+                        pass
+                        
                     if player.get_pause():
                         player.set_pause(False)
                     
@@ -539,8 +565,19 @@ class DisplayManager:
     def cleanup(self):
         """Cleanup and quit"""
         # Release video captures
+        # Release video captures
         for cap in self.video_caps.values():
             cap.release()
+            
+        # Release ffpyplayers
+        for entry in self.video_players.values():
+            try:
+                if isinstance(entry, dict):
+                    entry['player'].close_player()
+                else:
+                    entry.close_player()
+            except:
+                pass
             
         pygame.quit()
         logger.info("Display cleanup complete")
