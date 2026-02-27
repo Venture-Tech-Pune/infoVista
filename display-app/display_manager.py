@@ -471,17 +471,6 @@ class DisplayManager:
                         scaled_video = self._scale(frame, (img_width, img_height))
                         img_x = content_x + (content_width - img_width) // 2
                         self.screen.blit(scaled_video, (img_x, content_y))
-
-                        # Mute badge (always shown since all videos are muted)
-                        mute_font    = pygame.font.SysFont('Arial', 20, bold=True)
-                        mute_text    = mute_font.render("🔇 MUTED", True, (255, 255, 255))
-                        mute_bg      = pygame.Surface(
-                            (mute_text.get_width() + 16, mute_text.get_height() + 8), pygame.SRCALPHA
-                        )
-                        mute_bg.fill((0, 0, 0, 160))
-                        self.screen.blit(mute_bg,  (img_x + 8, content_y + 8))
-                        self.screen.blit(mute_text, (img_x + 16, content_y + 12))
-
                         content_y += img_height + 10
                     else:
                         # Loading placeholder
