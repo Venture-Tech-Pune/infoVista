@@ -200,6 +200,10 @@ class DisplayManager:
         # Ticker state
         self.ticker_x = width
 
+        # Header logo – loaded once and cached (no disk hit per frame)
+        self._header_logo = None
+        self._header_logo_loaded = False
+
         # Audio (desktop only – Pi runs silently)
         if not IS_RASPBERRY_PI:
             try:
@@ -259,13 +263,36 @@ class DisplayManager:
             self.draw_notice_box(notice, x, y, box_width, box_height, idx)
 
     def draw_header(self, notice_count):
-        """Draw header with title and notice count"""
+        """Draw header with title, logo and notice count"""
         header_rect = pygame.Rect(0, 0, self.width, 80)
         pygame.draw.rect(self.screen, self.colors['primary'], header_rect)
 
-        title_text = self.font_header.render("📢 INFOVISTA", True, self.colors['white'])
-        self.screen.blit(title_text, title_text.get_rect(midleft=(30, 40)))
+        # --- Logo (top-left) ---
+        logo_h   = 56          # height of logo inside the 80 px header
+        logo_x   = 12
+        logo_y   = (80 - logo_h) // 2
+        logo_end = logo_x      # will advance after logo is drawn
 
+        if not self._header_logo_loaded:
+            try:
+                raw = pygame.image.load("Logo/SCOE.png").convert_alpha()
+                aspect = raw.get_width() / raw.get_height()
+                logo_w = int(logo_h * aspect)
+                self._header_logo = pygame.transform.smoothscale(raw, (logo_w, logo_h))
+            except Exception as e:
+                logger.warning(f"Header logo not loaded: {e}")
+                self._header_logo = None
+            self._header_logo_loaded = True
+
+        if self._header_logo:
+            self.screen.blit(self._header_logo, (logo_x, logo_y))
+            logo_end = logo_x + self._header_logo.get_width() + 12
+
+        # --- Title text (right of logo) ---
+        title_text = self.font_header.render("INFOVISTA", True, self.colors['white'])
+        self.screen.blit(title_text, title_text.get_rect(midleft=(logo_end, 40)))
+
+        # --- Right side: time + notice count ---
         count_text = self.font_meta.render(
             f"{notice_count} Active Notice{'s' if notice_count != 1 else ''}", True, self.colors['white']
         )
