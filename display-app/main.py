@@ -4,7 +4,7 @@ import json
 import time
 import socketio
 from api_client import APIClient
-from display_manager import DisplayManager
+from display_manager import DisplayManager, IS_RASPBERRY_PI
 
 # Configure logging
 logging.basicConfig(
@@ -166,8 +166,10 @@ class DisplayApp:
                 self.display.draw_grid_layout(self.notices, self.weather)
                 self.display.update()
                 
-                # Control frame rate
-                clock.tick(self.config['display'].get('fps', 30))
+                # Control frame rate (cap to 15 fps on Pi to reduce CPU load)
+                configured_fps = self.config['display'].get('fps', 30)
+                effective_fps  = min(configured_fps, 15) if IS_RASPBERRY_PI else configured_fps
+                clock.tick(effective_fps)
         
         except KeyboardInterrupt:
             logger.info("Keyboard interrupt received")

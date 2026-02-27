@@ -3,5 +3,10 @@ pygame
 python-socketio
 python-dotenv
 Pillow
+numpy
 opencv-python
+# ffpyplayer is used on desktop (Windows/Linux x86).
+# On Raspberry Pi it is NOT required — video is handled via ffmpeg subprocess.
+# Install only if you are NOT on a Pi:
+#   pip install ffpyplayer
 ffpyplayer
