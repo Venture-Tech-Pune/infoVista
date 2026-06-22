@@ -447,9 +447,15 @@ class DisplayManager:
 
         reserved_desc_height = 0
         if description:
-            wrapped = textwrap.wrap(description, width=35)
+            # Apply same 30-word cap for accurate height pre-calculation
+            desc_words = description.split()
+            if len(desc_words) > 30:
+                description_capped = ' '.join(desc_words[:30]) + '…'
+            else:
+                description_capped = description
+            wrapped = textwrap.wrap(description_capped, width=35)
             actual_lines = min(len(wrapped), max_lines)
-            reserved_desc_height = actual_lines * 30 + 10 # 30px per line + 10px spacing
+            reserved_desc_height = actual_lines * 30 + 10  # 30px per line + 10px spacing
 
         if media_url:
             if media_type == 'image':
@@ -529,9 +535,13 @@ class DisplayManager:
                     self.screen.blit(play_text, play_text.get_rect(center=ph_rect.center))
                     content_y += 110
 
-        # Description (wrapped)
+        # Description (wrapped) — capped at 30 words to match Android input limit
         if description:
-            wrapped     = textwrap.wrap(description, width=35)
+            words = description.split()
+            MAX_WORDS = 30
+            if len(words) > MAX_WORDS:
+                description = ' '.join(words[:MAX_WORDS]) + '…'
+            wrapped = textwrap.wrap(description, width=35)
             for line in wrapped[:max_lines]:
                 desc_surface = self.font_desc.render(line, True, self.colors['text_secondary'])
                 self.screen.blit(desc_surface, (content_x, content_y))
