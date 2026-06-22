@@ -440,21 +440,20 @@ class DisplayManager:
         description = notice.get('description', '')
 
         # Calculate max description lines and reserved height based on box height
-        # Show up to 4 lines of description (approx 50 words) below the image card
+        # Show up to 6 lines of description (approx 400 chars) below the image card
         if height > 500:
-            max_lines = 4 if media_url else 8
+            max_lines = 6 if media_url else 10
         else:
-            max_lines = 2 if media_url else 4
+            max_lines = 2 if media_url else 5
 
         reserved_desc_height = 0
         if description:
-            # Apply 50-word cap for accurate height pre-calculation
-            desc_words = description.split()
-            if len(desc_words) > 50:
-                description_capped = ' '.join(desc_words[:50]) + '…'
+            # Apply 400-char cap for accurate height pre-calculation
+            if len(description) > 400:
+                description_capped = description[:400].rstrip() + '…'
             else:
                 description_capped = description
-            wrapped = textwrap.wrap(description_capped, width=45)
+            wrapped = textwrap.wrap(description_capped, width=50)
             actual_lines = min(len(wrapped), max_lines)
             reserved_desc_height = actual_lines * 28 + 10  # 28px per line + 10px spacing
 
@@ -536,13 +535,12 @@ class DisplayManager:
                     self.screen.blit(play_text, play_text.get_rect(center=ph_rect.center))
                     content_y += 110
 
-        # Description (wrapped) — capped at 50 words, lines clamped to box bounds
+        # Description (wrapped) — capped at 400 characters, lines clamped to box bounds
         if description:
-            words = description.split()
-            MAX_WORDS = 50
-            if len(words) > MAX_WORDS:
-                description = ' '.join(words[:MAX_WORDS]) + '…'
-            wrapped = textwrap.wrap(description, width=45)
+            MAX_CHARS = 400
+            if len(description) > MAX_CHARS:
+                description = description[:MAX_CHARS].rstrip() + '…'
+            wrapped = textwrap.wrap(description, width=50)
             footer_zone = y + height - 50   # bottom boundary: leave 50 px for footer badge
             for line in wrapped[:max_lines]:
                 if content_y + 26 > footer_zone:   # stop if next line would overflow
