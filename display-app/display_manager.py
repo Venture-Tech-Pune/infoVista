@@ -440,10 +440,11 @@ class DisplayManager:
         description = notice.get('description', '')
 
         # Calculate max description lines and reserved height based on box height
+        # When media is present, limit to 2 lines so description stays compact below image
         if height > 500:
-            max_lines = 4 if media_url else 8
+            max_lines = 2 if media_url else 6
         else:
-            max_lines = 1 if media_url else 4
+            max_lines = 1 if media_url else 3
 
         reserved_desc_height = 0
         if description:
@@ -453,9 +454,9 @@ class DisplayManager:
                 description_capped = ' '.join(desc_words[:30]) + '…'
             else:
                 description_capped = description
-            wrapped = textwrap.wrap(description_capped, width=35)
+            wrapped = textwrap.wrap(description_capped, width=40)
             actual_lines = min(len(wrapped), max_lines)
-            reserved_desc_height = actual_lines * 30 + 10  # 30px per line + 10px spacing
+            reserved_desc_height = actual_lines * 28 + 10  # 28px per line + 10px spacing
 
         if media_url:
             if media_type == 'image':
