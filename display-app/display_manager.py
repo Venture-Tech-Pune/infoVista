@@ -536,13 +536,17 @@ class DisplayManager:
                     content_y += 110
 
         # Description (wrapped) — capped at 30 words to match Android input limit
+        # Lines are only drawn if they fit within the notice box bounds
         if description:
             words = description.split()
             MAX_WORDS = 30
             if len(words) > MAX_WORDS:
                 description = ' '.join(words[:MAX_WORDS]) + '…'
             wrapped = textwrap.wrap(description, width=35)
+            footer_zone = y + height - 50   # bottom boundary: leave 50 px for footer badge
             for line in wrapped[:max_lines]:
+                if content_y + 28 > footer_zone:   # stop if next line would overflow
+                    break
                 desc_surface = self.font_desc.render(line, True, self.colors['text_secondary'])
                 self.screen.blit(desc_surface, (content_x, content_y))
                 content_y += 30
