@@ -235,7 +235,7 @@ class DisplayManager:
         else:
             return 3, 3
 
-    def draw_grid_layout(self, notices, weather_data=None):
+    def draw_grid_layout(self, notices, weather_data=None, total_count=None):
         """Draw notices in a grid/collage layout"""
         self.screen.fill(self.colors['bg'])
 
@@ -253,7 +253,7 @@ class DisplayManager:
         box_width  = available_width  // cols
         box_height = available_height // rows
 
-        self.draw_header(len(display_notices))
+        self.draw_header(total_count if total_count is not None else len(display_notices))
 
         for idx, notice in enumerate(display_notices):
             row = idx // cols
@@ -437,13 +437,26 @@ class DisplayManager:
 
         media_url  = notice.get('mediaUrl')
         media_type = notice.get('mediaType')
+        description = notice.get('description', '')
+
+        # Calculate max description lines and reserved height based on box height
+        if height > 500:
+            max_lines = 4 if media_url else 8
+        else:
+            max_lines = 1 if media_url else 4
+
+        reserved_desc_height = 0
+        if description:
+            wrapped = textwrap.wrap(description, width=35)
+            actual_lines = min(len(wrapped), max_lines)
+            reserved_desc_height = actual_lines * 30 + 10 # 30px per line + 10px spacing
 
         if media_url:
             if media_type == 'image':
                 image_surface = self.load_image(media_url)
                 if image_surface:
                     footer_height    = 40
-                    available_height = (y + height) - content_y - footer_height
+                    available_height = (y + height) - content_y - footer_height - reserved_desc_height
                     img_width        = content_width
                     orig_w, orig_h   = image_surface.get_size()
                     aspect_ratio     = orig_h / orig_w
@@ -487,7 +500,7 @@ class DisplayManager:
 
                     if frame is not None:
                         footer_height    = 40
-                        available_height = (y + height) - content_y - footer_height
+                        available_height = (y + height) - content_y - footer_height - reserved_desc_height
                         img_width        = content_width
                         orig_w, orig_h   = frame.get_size()
                         aspect_ratio     = orig_h / orig_w if orig_w else 1
@@ -517,9 +530,7 @@ class DisplayManager:
                     content_y += 110
 
         # Description (wrapped)
-        description = notice.get('description', '')
         if description:
-            max_lines   = 1 if media_url else 4
             wrapped     = textwrap.wrap(description, width=35)
             for line in wrapped[:max_lines]:
                 desc_surface = self.font_desc.render(line, True, self.colors['text_secondary'])

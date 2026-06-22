@@ -49,6 +49,8 @@ class DisplayApp:
         self.notices = []
         self.weather = None
         self.running = True
+        self.current_slide_index = 0
+        self.last_slide_switch_time = time.time()
         
         logger.info(f"📱 Device ID: {self.config['device']['deviceId']}")
         logger.info(f"🌐 Server: {self.config['server']['baseUrl']}")
@@ -98,9 +100,14 @@ class DisplayApp:
     def fetch_notices(self):
         """Fetch active notices from server"""
         notices = self.api_client.get_active_notices()
-        if notices:
-            self.notices = notices
-            logger.info(f"📋 Loaded {len(notices)} notices")
+        if notices is not None:
+            if notices != self.notices:
+                self.notices = notices
+                self.current_slide_index = 0
+                self.last_slide_switch_time = time.time()
+                logger.info(f"📋 Loaded new notices. Count: {len(notices)}")
+            else:
+                logger.debug("📋 Notices fetched, but no changes detected.")
     
     def fetch_weather(self):
         """Fetch weather data"""
@@ -162,8 +169,35 @@ class DisplayApp:
                     self.update_device_status()
                     last_status_update = current_time
                 
+                # Filter notices to only keep those with media
+                media_notices = [n for n in self.notices if n.get('mediaUrl') and n.get('mediaType') in ('image', 'video')]
+                
+                # Chunk into pages/slides of size at most 2
+                slides = [media_notices[i:i + 2] for i in range(0, len(media_notices), 2)]
+                
+                # Cap at max 2 slides in rotation
+                slides = slides[:2]
+                
+                # Determine current slide to display
+                current_slide = []
+                if slides:
+                    num_slides = len(slides)
+                    if self.current_slide_index >= num_slides:
+                        self.current_slide_index = 0
+                    
+                    current_slide = slides[self.current_slide_index]
+                    
+                    # Calculate slide duration (max displayDuration of notices on this slide, default 10s)
+                    slide_duration = max([n.get('displayDuration', 10) for n in current_slide]) if current_slide else 10
+                    
+                    if current_time - self.last_slide_switch_time >= slide_duration:
+                        self.current_slide_index = (self.current_slide_index + 1) % num_slides
+                        self.last_slide_switch_time = current_time
+                        logger.info(f"🔄 Slideshow: switched to slide index {self.current_slide_index} (showing {len(slides[self.current_slide_index])} notices)")
+                        current_slide = slides[self.current_slide_index]
+
                 # Draw grid layout
-                self.display.draw_grid_layout(self.notices, self.weather)
+                self.display.draw_grid_layout(current_slide, self.weather, total_count=len(media_notices))
                 self.display.update()
                 
                 # Control frame rate (cap to 15 fps on Pi to reduce CPU load)
