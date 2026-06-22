@@ -440,21 +440,21 @@ class DisplayManager:
         description = notice.get('description', '')
 
         # Calculate max description lines and reserved height based on box height
-        # When media is present, limit to 2 lines so description stays compact below image
+        # Show up to 4 lines of description (approx 50 words) below the image card
         if height > 500:
-            max_lines = 2 if media_url else 6
+            max_lines = 4 if media_url else 8
         else:
-            max_lines = 1 if media_url else 3
+            max_lines = 2 if media_url else 4
 
         reserved_desc_height = 0
         if description:
-            # Apply same 30-word cap for accurate height pre-calculation
+            # Apply 50-word cap for accurate height pre-calculation
             desc_words = description.split()
-            if len(desc_words) > 30:
-                description_capped = ' '.join(desc_words[:30]) + '…'
+            if len(desc_words) > 50:
+                description_capped = ' '.join(desc_words[:50]) + '…'
             else:
                 description_capped = description
-            wrapped = textwrap.wrap(description_capped, width=40)
+            wrapped = textwrap.wrap(description_capped, width=45)
             actual_lines = min(len(wrapped), max_lines)
             reserved_desc_height = actual_lines * 28 + 10  # 28px per line + 10px spacing
 
@@ -536,21 +536,20 @@ class DisplayManager:
                     self.screen.blit(play_text, play_text.get_rect(center=ph_rect.center))
                     content_y += 110
 
-        # Description (wrapped) — capped at 30 words to match Android input limit
-        # Lines are only drawn if they fit within the notice box bounds
+        # Description (wrapped) — capped at 50 words, lines clamped to box bounds
         if description:
             words = description.split()
-            MAX_WORDS = 30
+            MAX_WORDS = 50
             if len(words) > MAX_WORDS:
                 description = ' '.join(words[:MAX_WORDS]) + '…'
-            wrapped = textwrap.wrap(description, width=35)
+            wrapped = textwrap.wrap(description, width=45)
             footer_zone = y + height - 50   # bottom boundary: leave 50 px for footer badge
             for line in wrapped[:max_lines]:
-                if content_y + 28 > footer_zone:   # stop if next line would overflow
+                if content_y + 26 > footer_zone:   # stop if next line would overflow
                     break
                 desc_surface = self.font_desc.render(line, True, self.colors['text_secondary'])
                 self.screen.blit(desc_surface, (content_x, content_y))
-                content_y += 30
+                content_y += 28
 
         # Category badge
         category         = notice.get('category', 'general')
