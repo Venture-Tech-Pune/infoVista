@@ -446,7 +446,7 @@ class DisplayManager:
         else:
             max_lines = 2 if media_url else 5
 
-        reserved_desc_height = 0
+        reserved_desc_height = 50
         if description:
             # Apply 400-char cap for accurate height pre-calculation
             if len(description) > 400:
@@ -455,24 +455,26 @@ class DisplayManager:
                 description_capped = description
             wrapped = textwrap.wrap(description_capped, width=50)
             actual_lines = min(len(wrapped), max_lines)
-            reserved_desc_height = actual_lines * 28 + 10  # 28px per line + 10px spacing
+            reserved_desc_height = actual_lines * 28 + 58  # 28px per line + 58px for footer zone and image padding
 
         if media_url:
             if media_type == 'image':
                 image_surface = self.load_image(media_url)
                 if image_surface:
-                    footer_height    = 40
-                    available_height = (y + height) - content_y - footer_height - reserved_desc_height
-                    img_width        = content_width
-                    orig_w, orig_h   = image_surface.get_size()
-                    aspect_ratio     = orig_h / orig_w
-                    img_height       = min(int(img_width * aspect_ratio), available_height)
-                    if img_height == available_height:
-                        img_width = int(img_height / aspect_ratio)
-                    scaled_image = self._scale(image_surface, (img_width, img_height))
-                    img_x = content_x + (content_width - img_width) // 2
-                    self.screen.blit(scaled_image, (img_x, content_y))
-                    content_y += img_height + 10
+                    available_height = max(0, (y + height) - content_y - reserved_desc_height)
+                    available_height = min(available_height, height // 2)
+                    if available_height > 20:
+                        img_width        = content_width
+                        orig_w, orig_h   = image_surface.get_size()
+                        aspect_ratio     = orig_h / orig_w
+                        img_height       = min(int(img_width * aspect_ratio), available_height)
+                        if img_height == available_height:
+                            img_width = int(img_height / aspect_ratio)
+                        if img_width > 0 and img_height > 0:
+                            scaled_image = self._scale(image_surface, (img_width, img_height))
+                            img_x = content_x + (content_width - img_width) // 2
+                            self.screen.blit(scaled_image, (img_x, content_y))
+                            content_y += img_height + 10
 
             elif media_type == 'video':
                 # -------------------------------------------------------
@@ -505,19 +507,20 @@ class DisplayManager:
                             logger.debug(f"ffpyplayer get_frame error: {e}")
 
                     if frame is not None:
-                        footer_height    = 40
-                        available_height = (y + height) - content_y - footer_height - reserved_desc_height
-                        img_width        = content_width
-                        orig_w, orig_h   = frame.get_size()
-                        aspect_ratio     = orig_h / orig_w if orig_w else 1
-                        img_height       = min(int(img_width * aspect_ratio), available_height)
-                        if img_height == available_height:
-                            img_width = int(img_height / aspect_ratio)
-
-                        scaled_video = self._scale(frame, (img_width, img_height))
-                        img_x = content_x + (content_width - img_width) // 2
-                        self.screen.blit(scaled_video, (img_x, content_y))
-                        content_y += img_height + 10
+                        available_height = max(0, (y + height) - content_y - reserved_desc_height)
+                        available_height = min(available_height, height // 2)
+                        if available_height > 20:
+                            img_width        = content_width
+                            orig_w, orig_h   = frame.get_size()
+                            aspect_ratio     = orig_h / orig_w if orig_w else 1
+                            img_height       = min(int(img_width * aspect_ratio), available_height)
+                            if img_height == available_height:
+                                img_width = int(img_height / aspect_ratio)
+                            if img_width > 0 and img_height > 0:
+                                scaled_video = self._scale(frame, (img_width, img_height))
+                                img_x = content_x + (content_width - img_width) // 2
+                                self.screen.blit(scaled_video, (img_x, content_y))
+                                content_y += img_height + 10
                     else:
                         # Loading placeholder
                         pygame.draw.rect(

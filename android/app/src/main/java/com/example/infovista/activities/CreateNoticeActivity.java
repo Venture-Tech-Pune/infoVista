@@ -55,7 +55,7 @@ public class CreateNoticeActivity extends AppCompatActivity {
     private Uri selectedImageUri, selectedVideoUri;
 
     // Preview views
-    private TextView previewTitle, previewDescription, previewCategory;
+    private TextView previewTitle, previewDescription, previewCategory, tvDescriptionWordCount;
     private ImageView previewImage;
     private View previewPriorityBar;
 
@@ -102,6 +102,7 @@ public class CreateNoticeActivity extends AppCompatActivity {
         previewCategory = findViewById(R.id.previewCategory);
         previewImage = findViewById(R.id.previewImage);
         previewPriorityBar = findViewById(R.id.previewPriorityBar);
+        tvDescriptionWordCount = findViewById(R.id.tvDescriptionWordCount);
 
         // Setup spinners
         setupSpinners();
@@ -147,6 +148,7 @@ public class CreateNoticeActivity extends AppCompatActivity {
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 updatePreview();
+                updateWordCount(s.toString());
             }
 
             @Override
@@ -206,6 +208,18 @@ public class CreateNoticeActivity extends AppCompatActivity {
         }
         previewPriorityBar.setBackgroundColor(priorityColor);
         previewCategory.setTextColor(priorityColor);
+    }
+
+    private void updateWordCount(String text) {
+        int charCount = text.length();
+        if (tvDescriptionWordCount != null) {
+            tvDescriptionWordCount.setText(charCount + " / 200 chars");
+            if (charCount > 200) {
+                tvDescriptionWordCount.setTextColor(getResources().getColor(R.color.priority_urgent));
+            } else {
+                tvDescriptionWordCount.setTextColor(getResources().getColor(R.color.text_secondary));
+            }
+        }
     }
 
     private void setupSpinners() {
@@ -453,6 +467,12 @@ public class CreateNoticeActivity extends AppCompatActivity {
 
         if (description.isEmpty()) {
             etDescription.setError("Description is required");
+            etDescription.requestFocus();
+            return;
+        }
+
+        if (description.length() > 200) {
+            etDescription.setError("Description cannot exceed 200 characters");
             etDescription.requestFocus();
             return;
         }

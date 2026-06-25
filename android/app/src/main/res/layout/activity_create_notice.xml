@@ -156,10 +156,21 @@
                     android:inputType="textMultiLine"
                     android:minLines="4"
                     android:gravity="top"
+                    android:maxLength="200"
                     android:textColor="@color/text_primary"
                     android:textColorHint="@color/text_hint" />
 
             </com.google.android.material.textfield.TextInputLayout>
+
+            <TextView
+                android:id="@+id/tvDescriptionWordCount"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="0 / 200 chars"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp"
+                android:gravity="end"
+                android:layout_marginTop="4dp" />
 
             <TextView
                 android:layout_width="wrap_content"
